@@ -1,4 +1,4 @@
-# CSI ORIGIN PS9 — M1 Backend / Integration Skeleton
+# CSI ORIGIN PS9 — Backend / Integration Skeleton
 
 Milestone: `event_id -> backend -> standardized risk JSON (placeholder scores)`
 
