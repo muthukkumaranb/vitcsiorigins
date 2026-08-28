@@ -9,10 +9,8 @@ import os
 import requests
 from typing import Any, Dict, Literal, Optional
 
-try:
-    from .prompts import SYSTEM_PROMPT, build_user_prompt
-except ImportError:
-    from prompts import SYSTEM_PROMPT, build_user_prompt
+from .prompts import SYSTEM_PROMPT, build_user_prompt
+
 
 OLLAMA_DEFAULT_HOST = "http://localhost:11434"
 DEFAULT_MODEL = "llama3.1:8b"

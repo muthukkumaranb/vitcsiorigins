@@ -9,12 +9,9 @@ temporal attack chains.
 import random
 from datetime import datetime, timezone
 
-try:
-    from ..data_loader import store
-    from .scenarios import SCENARIOS
-except ImportError:
-    from data_loader import store
-    from telemetry.scenarios import SCENARIOS
+from ..data_loader import store
+from .scenarios import SCENARIOS
+
 
 
 class EventGenerator:

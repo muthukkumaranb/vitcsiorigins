@@ -9,20 +9,13 @@ import os
 import numpy as np
 from datetime import datetime
 
-try:
-    from .model import SentinelModelWrapper, MODEL_DIR
-    from .features import FEATURE_NAMES
-    from .training import load_dataset, build_feature_matrix
-    from .dataset_builder import feedback_builder
-    from .registry.model_registry import model_registry
-    from .evaluator import evaluate_model_performance
-except ImportError:
-    from ml.model import SentinelModelWrapper, MODEL_DIR
-    from ml.features import FEATURE_NAMES
-    from ml.training import load_dataset, build_feature_matrix
-    from ml.dataset_builder import feedback_builder
-    from ml.registry.model_registry import model_registry
-    from ml.evaluator import evaluate_model_performance
+from .model import SentinelModelWrapper, MODEL_DIR
+from .features import FEATURE_NAMES
+from .training import load_dataset, build_feature_matrix
+from .dataset_builder import feedback_builder
+from .registry.model_registry import model_registry
+from .evaluator import evaluate_model_performance
+
 
 
 def train_candidate_model(version=None, description=""):

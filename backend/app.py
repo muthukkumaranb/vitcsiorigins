@@ -11,31 +11,17 @@ No database, no auth, no queues — a thin HTTP layer over processor.py.
 from datetime import datetime
 from flask import Flask, jsonify, request
 
-try:
-    from .data_loader import store
-    from .processor import process_event, ingest_and_process_event, EventNotFoundError
-    from .analyzer import get_security_analysis, get_analytics_data
-    from .incident_correlation import get_all_incidents, get_incident_by_id
-    from .ml import is_ml_available, get_model, FEATURE_NAMES
-    from .telemetry import simulator
-    from .ml.registry.model_registry import model_registry
-    from .ml.dataset_builder import feedback_builder
-    from .ml.trainer import train_candidate_model
-    from .llm import generate_narrative
-except ImportError:
-    from data_loader import store
-    from processor import process_event, ingest_and_process_event, EventNotFoundError
-    from analyzer import get_security_analysis, get_analytics_data
-    from incident_correlation import get_all_incidents, get_incident_by_id
-    from ml import is_ml_available, get_model, FEATURE_NAMES
-    from telemetry import simulator
-    from ml.registry.model_registry import model_registry
-    from ml.dataset_builder import feedback_builder
-    from ml.trainer import train_candidate_model
-    try:
-        from llm import generate_narrative
-    except ImportError:
-        generate_narrative = None
+from .data_loader import store
+from .processor import process_event, ingest_and_process_event, EventNotFoundError
+from .analyzer import get_security_analysis, get_analytics_data
+from .incident_correlation import get_all_incidents, get_incident_by_id
+from .ml import is_ml_available, get_model, FEATURE_NAMES
+from .telemetry import simulator
+from .ml.registry.model_registry import model_registry
+from .ml.dataset_builder import feedback_builder
+from .ml.trainer import train_candidate_model
+from .llm import generate_narrative
+
 
 
 app = Flask(__name__)
