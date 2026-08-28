@@ -50,57 +50,63 @@ export const TrustLandscapeChart: React.FC<TrustLandscapeChartProps> = ({ data }
       </div>
 
       {/* Recharts Area Chart */}
-      <div className="h-64 w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <defs>
-              <linearGradient id="trustGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.0} />
-              </linearGradient>
-              <linearGradient id="anomalyGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#ef4444" stopOpacity={0.0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1f293d" vertical={false} />
-            <XAxis dataKey="timestamp" stroke="#6b7280" fontSize={11} tickLine={false} />
-            <YAxis stroke="#6b7280" fontSize={11} domain={[0, 100]} tickLine={false} />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: '#111827',
-                borderColor: '#1f293d',
-                borderRadius: '8px',
-                color: '#f3f4f6',
-                fontSize: '12px'
-              }}
-              formatter={(val: any, name: any) => [
-                name === 'trust_score' ? `${val} / 100` : val,
-                name === 'trust_score' ? 'Behavioural Trust' : 'Anomalies'
-              ]}
-            />
-            <Area
-              type="monotone"
-              dataKey="trust_score"
-              stroke="#06b6d4"
-              strokeWidth={2.5}
-              fillOpacity={1}
-              fill="url(#trustGradient)"
-              name="trust_score"
-            />
-            <Area
-              type="monotone"
-              dataKey="anomaly_count"
-              stroke="#ef4444"
-              strokeWidth={1.5}
-              strokeDasharray="4 4"
-              fillOpacity={1}
-              fill="url(#anomalyGradient)"
-              name="anomaly_count"
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+      {data && data.length > 0 ? (
+        <div className="h-64 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="trustGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.0} />
+                </linearGradient>
+                <linearGradient id="anomalyGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0.0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1f293d" vertical={false} />
+              <XAxis dataKey="timestamp" stroke="#6b7280" fontSize={11} tickLine={false} />
+              <YAxis stroke="#6b7280" fontSize={11} domain={[0, 100]} tickLine={false} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#111827',
+                  borderColor: '#1f293d',
+                  borderRadius: '8px',
+                  color: '#f3f4f6',
+                  fontSize: '12px'
+                }}
+                formatter={(val: any, name: any) => [
+                  name === 'trust_score' ? `${val} / 100` : val,
+                  name === 'trust_score' ? 'Behavioural Trust' : 'Anomalies'
+                ]}
+              />
+              <Area
+                type="monotone"
+                dataKey="trust_score"
+                stroke="#06b6d4"
+                strokeWidth={2.5}
+                fillOpacity={1}
+                fill="url(#trustGradient)"
+                name="trust_score"
+              />
+              <Area
+                type="monotone"
+                dataKey="anomaly_count"
+                stroke="#ef4444"
+                strokeWidth={1.5}
+                strokeDasharray="4 4"
+                fillOpacity={1}
+                fill="url(#anomalyGradient)"
+                name="anomaly_count"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      ) : (
+        <div className="h-64 w-full flex items-center justify-center text-xs text-gray-500 bg-[#0b0f17] rounded-lg border border-[#1f293d]">
+          No trust trend observations recorded for the selected window.
+        </div>
+      )}
 
       <div className="flex items-center justify-end gap-6 mt-3 text-xs text-gray-400">
         <div className="flex items-center gap-2">

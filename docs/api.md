@@ -70,4 +70,24 @@ Returns chronological security event history and analyst-visible runtime risk as
 }
 ```
 
+## `GET /api/security-analysis` (or `GET /api/dashboard`)
+
+Returns aggregated enterprise security posture metrics:
+- `behavioural_trust_score`: Calculated enterprise trust baseline (0–100 scale).
+- `active_threats`: Count of high and critical threat alerts.
+- `privileged_identities`: Total monitored user accounts.
+- `events_analyzed`: Total runtime event count.
+- `threat_severity_counts`: Distribution across `critical`, `high`, `medium`, and `low`.
+- `trust_landscape` / `trust_over_time`: Hourly time buckets with `timestamp`, `trust_score`, and `anomaly_count`.
+- `live_stream`: Chronological recent runtime events.
+- `top_identities`: Identities ranked by evaluated risk score and high-risk activity.
+
+## `GET /api/analytics` (or `GET /analytics`)
+
+Returns intelligence aggregations including `risk_by_role`, `risk_by_account_type`, `anomalies_trend`, and model engine transparency metrics.
+
+## `GET /api/events` (or `GET /events`)
+
+Returns scored runtime events (optionally filtered with `?user_id=<user_id>`).
+
 Scores are finite and bounded to 0-100. Severity values are `LOW`, `MODERATE`, `HIGH`, and `CRITICAL`. Runtime inference never reads ground truth.

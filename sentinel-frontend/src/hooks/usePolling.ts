@@ -1,23 +1,44 @@
 import { useState, useEffect } from 'react';
 import { SecurityEvent } from '../types/security';
 import { MOCK_EVENTS } from '../data/mockData';
-import { IS_MOCK_MODE } from '../services';
+import { securityService, IS_MOCK_MODE } from '../services';
 
 export function useLiveBehaviourStream() {
   const [stream, setStream] = useState<SecurityEvent[]>(IS_MOCK_MODE ? MOCK_EVENTS : []);
   const [lastUpdated, setLastUpdated] = useState<number>(0);
 
   useEffect(() => {
+    let isMounted = true;
+
     // Timer to increment last updated counter
     const timer = setInterval(() => {
       setLastUpdated((prev) => prev + 1);
     }, 1000);
 
     if (!IS_MOCK_MODE) {
-      return () => clearInterval(timer);
+      const fetchStream = async () => {
+        try {
+          const events = await securityService.getEvents();
+          if (isMounted && events && events.length > 0) {
+            setStream(events);
+            setLastUpdated(0);
+          }
+        } catch {
+          // Handled gracefully
+        }
+      };
+
+      fetchStream();
+      const pollInterval = setInterval(fetchStream, 8000);
+
+      return () => {
+        isMounted = false;
+        clearInterval(timer);
+        clearInterval(pollInterval);
+      };
     }
 
-    // Simulated stream is intentionally restricted to mock mode.
+    // Simulated stream in mock mode
     const eventTimer = setInterval(() => {
       const randomUsers = [
         { id: 'U0345', name: 'Vikram Sharma', role: 'Finance Ops' },
@@ -55,6 +76,7 @@ export function useLiveBehaviourStream() {
     }, 12000);
 
     return () => {
+      isMounted = false;
       clearInterval(timer);
       clearInterval(eventTimer);
     };

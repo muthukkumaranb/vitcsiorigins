@@ -35,29 +35,7 @@ async function fetchJson<T>(endpoint: string, options?: RequestInit): Promise<T>
 
 export const apiService = {
   getDashboard: async (): Promise<DashboardMetrics> => {
-    const [health, alerts, identities] = await Promise.all([
-      fetchJson<{ events: number }>('/api/health'),
-      fetchJson<Array<{ risk_score: number; severity: string }>>('/api/alerts'),
-      fetchJson<Identity[]>('/api/identities')
-    ]);
-    const trust = alerts.length ? Math.round(100 - alerts.reduce((sum, alert) => sum + alert.risk_score, 0) / alerts.length) : 100;
-    return {
-      behavioural_trust_score: trust,
-      behavioural_trust_trend: 0,
-      active_threats: alerts.length,
-      active_threats_trend: 0,
-      privileged_identities: identities.length,
-      privileged_identities_trend: 0,
-      events_analyzed: health.events,
-      events_analyzed_trend: 0,
-      threat_severity_counts: {
-        critical: alerts.filter((alert) => alert.severity === 'CRITICAL').length,
-        high: alerts.filter((alert) => alert.severity === 'HIGH').length,
-        medium: alerts.filter((alert) => alert.severity === 'MODERATE').length,
-        low: 0
-      },
-      trust_landscape: []
-    };
+    return fetchJson<DashboardMetrics>('/api/security-analysis');
   },
   getThreats: async (): Promise<Threat[]> => (await fetchJson<Array<{ alert_id: string; event_id: string; user_id: string; risk_score: number; severity: RiskResult['severity']; timestamp: string; signals: Array<string | { signal: string; description?: string }> }>>('/api/alerts')).map((alert) => ({
     threat_id: alert.alert_id,
@@ -68,18 +46,9 @@ export const apiService = {
     timestamp: alert.timestamp,
     primary_reasons: alert.signals.map((signal) => typeof signal === 'string' ? signal : signal.signal)
   })),
-  getIdentities: async (): Promise<Identity[]> => (await fetchJson<Array<Record<string, string>>>('/api/identities')).map((identity) => ({
-    user_id: identity.user_id,
-    name: identity.user_id,
-    account_type: identity.actor_type === 'service_account' ? 'Service Account' : identity.actor_type === 'automated_system' ? 'Automated System' : 'Employee',
-    role: identity.role,
-    department: undefined,
-    privilege_level: 'NOT_AVAILABLE',
-    peer_group: identity.peer_group_id,
-    last_activity: undefined,
-    normal_hours: identity.typical_login_hour,
-    normal_location: identity.home_device
-  })),
+  getIdentities: async (): Promise<Identity[]> => {
+    return fetchJson<Identity[]>('/api/identities');
+  },
   getIdentity: (userId: string) => fetchJson<Identity>(`/api/identities/${userId}`),
   getRisk: async (eventId: string): Promise<RiskResult> => {
     const raw = await fetchJson<{
@@ -116,8 +85,8 @@ export const apiService = {
   getSequence: (userId: string) => fetchJson<BehaviourSequence>(`/investigation/${userId}/sequence`),
   getContext: (userId: string) => fetchJson<ContextAssessment>(`/investigation/${userId}/context`),
   getRelationshipGraph: (userId: string) => fetchJson<RelationshipGraphData>(`/investigation/${userId}/graph`),
-  getEvents: (userId?: string) => fetchJson<SecurityEvent[]>(userId ? `/events?user_id=${userId}` : '/events'),
-  getAnalytics: () => fetchJson<AnalyticsData>('/analytics'),
+  getEvents: (userId?: string) => fetchJson<SecurityEvent[]>(userId ? `/api/events?user_id=${userId}` : '/api/events'),
+  getAnalytics: () => fetchJson<AnalyticsData>('/api/analytics'),
   getAuditLogs: async (params?: AuditQueryParams): Promise<AuditLogResponse> => {
     const query = new URLSearchParams();
     if (params?.severity) query.append('severity', params.severity);

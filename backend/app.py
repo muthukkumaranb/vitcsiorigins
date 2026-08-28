@@ -14,9 +14,11 @@ from flask import Flask, jsonify, request
 try:
     from .data_loader import store
     from .processor import process_event, EventNotFoundError
+    from .analyzer import get_security_analysis, get_analytics_data
 except ImportError:
     from data_loader import store
     from processor import process_event, EventNotFoundError
+    from analyzer import get_security_analysis, get_analytics_data
 
 app = Flask(__name__)
 
@@ -56,9 +58,46 @@ def health():
     return jsonify({"status": "ok", "events": len(store.events_by_id), "users": len(store.users_by_id), "contexts": len(store.contexts)}), 200
 
 
+@app.route("/api/security-analysis", methods=["GET"])
+@app.route("/security-analysis", methods=["GET"])
+@app.route("/api/dashboard", methods=["GET"])
+@app.route("/dashboard", methods=["GET"])
+def security_analysis_endpoint():
+    return jsonify(get_security_analysis()), 200
+
+
+@app.route("/api/analytics", methods=["GET"])
+@app.route("/analytics", methods=["GET"])
+def analytics_endpoint():
+    return jsonify(get_analytics_data()), 200
+
+
+@app.route("/api/events", methods=["GET"])
+@app.route("/events", methods=["GET"])
+def events_endpoint():
+    user_id = request.args.get("user_id")
+    analysis = get_security_analysis()
+    events = analysis.get("live_stream", [])
+    if user_id:
+        events = [e for e in events if e.get("user_id", "").lower() == user_id.lower()]
+    return jsonify(events), 200
+
+
+@app.route("/identities", methods=["GET"])
 @app.route("/api/identities", methods=["GET"])
 def identities():
-    return jsonify(list(store.users_by_id.values())), 200
+    analysis = get_security_analysis()
+    return jsonify(analysis.get("top_identities", [])), 200
+
+
+@app.route("/identities/<user_id>", methods=["GET"])
+@app.route("/api/identities/<user_id>", methods=["GET"])
+def identity_detail(user_id):
+    analysis = get_security_analysis()
+    for ident in analysis.get("top_identities", []):
+        if ident.get("user_id", "").lower() == user_id.lower():
+            return jsonify(ident), 200
+    return jsonify({"error": "identity_not_found", "user_id": user_id}), 404
 
 
 @app.route("/api/alerts", methods=["GET"])
