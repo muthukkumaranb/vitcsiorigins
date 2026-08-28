@@ -17,7 +17,7 @@ except ImportError:
 OLLAMA_DEFAULT_HOST = "http://localhost:11434"
 DEFAULT_MODEL = "llama3.1:8b"
 FALLBACK_MODEL = "qwen2.5:7b"
-DEFAULT_TIMEOUT_SECONDS = 3.0
+DEFAULT_TIMEOUT_SECONDS = float(os.environ.get("OLLAMA_TIMEOUT", "60.0"))
 
 
 def get_ollama_host() -> str:
