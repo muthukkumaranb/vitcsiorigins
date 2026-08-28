@@ -21,6 +21,7 @@ try:
     from .ml.registry.model_registry import model_registry
     from .ml.dataset_builder import feedback_builder
     from .ml.trainer import train_candidate_model
+    from .llm import generate_narrative
 except ImportError:
     from data_loader import store
     from processor import process_event, ingest_and_process_event, EventNotFoundError
@@ -31,9 +32,15 @@ except ImportError:
     from ml.registry.model_registry import model_registry
     from ml.dataset_builder import feedback_builder
     from ml.trainer import train_candidate_model
+    try:
+        from llm import generate_narrative
+    except ImportError:
+        generate_narrative = None
 
 
 app = Flask(__name__)
+
+_NARRATIVE_CACHE = {}
 
 
 @app.route("/", methods=["GET"])
@@ -54,6 +61,23 @@ def allow_frontend_origin(response):
 
 @app.route("/api/events/<event_id>/risk/", methods=["GET"])
 def get_event_risk(event_id):
+    with_narrative = request.args.get("narrative", "").lower() in ("true", "1")
+    try:
+        result = process_event(event_id, with_narrative=with_narrative)
+    except EventNotFoundError:
+        return jsonify({
+            "error": "event_not_found",
+            "message": f"Event '{event_id}' does not exist.",
+            "event_id": event_id,
+        }), 404
+
+    return jsonify(result), 200
+
+
+@app.route("/api/events/<event_id>/narrative", methods=["GET"])
+@app.route("/events/<event_id>/narrative", methods=["GET"])
+def get_event_narrative_endpoint(event_id):
+    refresh = request.args.get("refresh", "").lower() in ("true", "1")
     try:
         result = process_event(event_id)
     except EventNotFoundError:
@@ -63,7 +87,33 @@ def get_event_risk(event_id):
             "event_id": event_id,
         }), 404
 
-    return jsonify(result), 200
+    cache_key = f"event:{event_id}:{result.get('risk_score')}:{result.get('severity')}"
+    if not refresh and cache_key in _NARRATIVE_CACHE:
+        cached_entry = _NARRATIVE_CACHE[cache_key]
+        return jsonify({
+            "event_id": event_id,
+            "narrative": cached_entry.get("narrative"),
+            "narrative_status": cached_entry.get("narrative_status", "ok"),
+            "model": cached_entry.get("model"),
+            "cached": True,
+        }), 200
+
+    if generate_narrative:
+        narrative_res = generate_narrative(result, kind="event")
+    else:
+        narrative_res = {"narrative_status": "unavailable", "narrative": None, "error": "LLM client unavailable"}
+
+    if narrative_res.get("narrative_status") == "ok":
+        _NARRATIVE_CACHE[cache_key] = narrative_res
+
+    return jsonify({
+        "event_id": event_id,
+        "narrative": narrative_res.get("narrative"),
+        "narrative_status": narrative_res.get("narrative_status", "unavailable"),
+        "model": narrative_res.get("model"),
+        "cached": False,
+        "error": narrative_res.get("error"),
+    }), 200
 
 
 @app.route("/health", methods=["GET"])
@@ -278,6 +328,43 @@ def incident_detail(incident_id):
     if inc is None:
         return jsonify({"error": "incident_not_found", "incident_id": incident_id}), 404
     return jsonify(inc), 200
+
+
+@app.route("/api/incidents/<incident_id>/narrative", methods=["GET"])
+@app.route("/incidents/<incident_id>/narrative", methods=["GET"])
+def get_incident_narrative_endpoint(incident_id):
+    refresh = request.args.get("refresh", "").lower() in ("true", "1")
+    inc = get_incident_by_id(incident_id)
+    if inc is None:
+        return jsonify({"error": "incident_not_found", "incident_id": incident_id}), 404
+
+    cache_key = f"incident:{incident_id}:{inc.get('max_risk_score')}:{inc.get('event_count')}"
+    if not refresh and cache_key in _NARRATIVE_CACHE:
+        cached_entry = _NARRATIVE_CACHE[cache_key]
+        return jsonify({
+            "incident_id": incident_id,
+            "narrative": cached_entry.get("narrative"),
+            "narrative_status": cached_entry.get("narrative_status", "ok"),
+            "model": cached_entry.get("model"),
+            "cached": True,
+        }), 200
+
+    if generate_narrative:
+        narrative_res = generate_narrative(inc, kind="incident")
+    else:
+        narrative_res = {"narrative_status": "unavailable", "narrative": None, "error": "LLM client unavailable"}
+
+    if narrative_res.get("narrative_status") == "ok":
+        _NARRATIVE_CACHE[cache_key] = narrative_res
+
+    return jsonify({
+        "incident_id": incident_id,
+        "narrative": narrative_res.get("narrative"),
+        "narrative_status": narrative_res.get("narrative_status", "unavailable"),
+        "model": narrative_res.get("model"),
+        "cached": False,
+        "error": narrative_res.get("error"),
+    }), 200
 
 
 # =========================================================================

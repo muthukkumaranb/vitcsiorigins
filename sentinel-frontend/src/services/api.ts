@@ -18,7 +18,8 @@ import {
   SecurityIncident,
   RiskResult,
   SimulationStatus,
-  ModelRegistryData
+  ModelRegistryData,
+  NarrativeResponse
 } from '../types/security';
 
 import { formatSignal } from '../utils/formatters';
@@ -94,6 +95,10 @@ export const apiService = {
       explainability_factors: raw.explainability_factors,
     };
   },
+  getEventNarrative: (eventId: string, refresh = false): Promise<NarrativeResponse> =>
+    fetchJson<NarrativeResponse>(`/api/events/${eventId}/narrative${refresh ? '?refresh=true' : ''}`),
+  getIncidentNarrative: (incidentId: string, refresh = false): Promise<NarrativeResponse> =>
+    fetchJson<NarrativeResponse>(`/api/incidents/${incidentId}/narrative${refresh ? '?refresh=true' : ''}`),
   getMLStatus: (): Promise<MLStatus> => fetchJson<MLStatus>('/api/ml/status'),
   getIncidents: (): Promise<SecurityIncident[]> => fetchJson<SecurityIncident[]>('/api/incidents'),
   getIncident: (incidentId: string): Promise<SecurityIncident> => fetchJson<SecurityIncident>(`/api/incidents/${incidentId}`),

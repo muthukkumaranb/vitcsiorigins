@@ -6,3 +6,4 @@ const USE_MOCK = import.meta.env.VITE_USE_MOCK_DATA === 'true';
 
 export const securityService = USE_MOCK ? mockApiService : apiService;
 export const IS_MOCK_MODE = USE_MOCK;
+export { apiService, mockApiService };
