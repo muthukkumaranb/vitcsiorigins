@@ -97,8 +97,9 @@ export const AICopilotCard: React.FC<AICopilotCardProps> = ({
             </h4>
             <ul className="space-y-1.5">
               {checkLines.map((chk, idx) => {
-                const cleaned = chk.replace(/^([•\-\*]|\d+\.)\s*/, '');
+                const cleaned = chk.replace(/^([•\-*]|\d+\.)\s*/, '');
                 return (
+
                   <li key={idx} className="text-xs text-gray-300 flex items-start gap-2">
                     <span className="text-cyan-400 font-bold">•</span>
                     <span>{cleaned}</span>
