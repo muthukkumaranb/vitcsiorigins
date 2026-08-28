@@ -26,6 +26,10 @@ Missing events return HTTP 404:
 
 Scores are finite and bounded to 0-100. Severity values are `LOW`, `MODERATE`, `HIGH`, and `CRITICAL`. Runtime inference never reads ground truth.
 
+## `GET /api/events/`
+
+Returns runtime events ordered newest first, with server-derived `risk_score`, `severity`, behavior `signals`, `sequence`, and `context` fields. An optional `user_id` query parameter filters the collection. This endpoint powers the dashboard's polling-based event history and behavior stream; it does not create or simulate events.
+
 ## `GET /api/events/{event_id}/response/`
 
 Returns the server-generated response recommendation and its current analyst workflow state. The response includes `response_id`, `event_id`, `user_id`, `risk_score`, `severity`, `risk_explanation` (the existing signals, sequence, and context explanation), `recommended_action`, `recommended_actions`, `recommendation_reason`, `recommendation_priority`, `state`, `actor`, decision/execution timestamps, and simulated execution status.

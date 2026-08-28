@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { Card } from '../common/Card';
+import { EmptyState } from '../common/EmptyState';
+import { ErrorState } from '../common/ErrorState';
+import { SecurityEvent } from '../../types/security';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -13,10 +16,47 @@ import { Activity } from 'lucide-react';
 
 interface TrustLandscapeChartProps {
   data: { timestamp: string; trust_score: number; anomaly_count: number }[];
+  events: SecurityEvent[];
+  isLoading?: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
 }
 
-export const TrustLandscapeChart: React.FC<TrustLandscapeChartProps> = ({ data }) => {
+interface ChartPoint {
+  timestamp: string;
+  score: number;
+  event_id: string;
+  event_type: string;
+  user_id: string;
+  severity: SecurityEvent['risk_level'];
+  metric_label: string;
+}
+
+export const TrustLandscapeChart: React.FC<TrustLandscapeChartProps> = ({ data, events, isLoading, isError, onRetry }) => {
   const [timeRange, setTimeRange] = useState<'24H' | '7D' | '30D'>('24H');
+  const eventData: ChartPoint[] = events
+    .filter((event) => typeof event.risk_score === 'number')
+    .sort((first, second) => first.timestamp.localeCompare(second.timestamp))
+    .map((event) => ({
+      timestamp: event.timestamp,
+      score: event.risk_score as number,
+      event_id: event.event_id,
+      event_type: event.event_type,
+      user_id: event.user_id,
+      severity: event.risk_level,
+      metric_label: 'Event risk score'
+    }));
+  const chartData = eventData.length > 0 ? eventData : data.map((point) => ({
+    timestamp: point.timestamp,
+    score: point.trust_score,
+    event_id: 'Dashboard aggregate',
+    event_type: 'Existing dashboard series',
+    user_id: 'Aggregate',
+    severity: 'LOW' as const,
+    metric_label: 'Trust fixture'
+  }));
+  const plottedData: ChartPoint[] = eventData.length > 0 ? eventData : chartData;
+  const usingEventRisk = eventData.length > 0;
 
   return (
     <Card className="col-span-full lg:col-span-8">
@@ -27,7 +67,7 @@ export const TrustLandscapeChart: React.FC<TrustLandscapeChartProps> = ({ data }
           </div>
           <div>
             <h2 className="text-base font-bold text-gray-100">Behavioural Trust Over Time</h2>
-            <p className="text-xs text-gray-400">Continuous enterprise score baseline (0–100 scale)</p>
+            <p className="text-xs text-gray-400">{usingEventRisk ? 'Runtime event risk score, chronological (0–100)' : 'Existing dashboard trust fixture (0–100)'}</p>
           </div>
         </div>
 
@@ -49,10 +89,9 @@ export const TrustLandscapeChart: React.FC<TrustLandscapeChartProps> = ({ data }
         </div>
       </div>
 
-      {/* Recharts Area Chart */}
-      <div className="h-64 w-full">
+      {isLoading ? <div className="h-64 animate-pulse rounded-lg bg-gray-800/40" /> : isError ? <ErrorState message="Unable to load runtime event history." onRetry={onRetry} /> : chartData.length === 0 ? <EmptyState title="No Event History" description="No scored runtime events are available for this view." /> : <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <AreaChart data={plottedData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="trustGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.4} />
@@ -74,42 +113,34 @@ export const TrustLandscapeChart: React.FC<TrustLandscapeChartProps> = ({ data }
                 color: '#f3f4f6',
                 fontSize: '12px'
               }}
-              formatter={(val: any, name: any) => [
-                name === 'trust_score' ? `${val} / 100` : val,
-                name === 'trust_score' ? 'Behavioural Trust' : 'Anomalies'
-              ]}
+              content={({ active, payload, label }) => {
+                if (!active || !payload?.length) return null;
+                const point = payload[0].payload as (typeof plottedData)[number];
+                return <div className="bg-[#111827] border border-[#1f293d] rounded-lg p-3 text-xs text-gray-200 shadow-lg">
+                  <div className="font-mono text-gray-400">{label}</div>
+                  <div className="font-semibold mt-1">{point.metric_label}: {point.score} / 100</div>
+                  <div className="text-gray-400 mt-1">{point.event_id} · {point.user_id}</div>
+                  <div className="text-gray-400">{point.event_type} · {point.severity}</div>
+                </div>;
+              }}
             />
             <Area
               type="monotone"
-              dataKey="trust_score"
+              dataKey="score"
               stroke="#06b6d4"
               strokeWidth={2.5}
               fillOpacity={1}
               fill="url(#trustGradient)"
-              name="trust_score"
-            />
-            <Area
-              type="monotone"
-              dataKey="anomaly_count"
-              stroke="#ef4444"
-              strokeWidth={1.5}
-              strokeDasharray="4 4"
-              fillOpacity={1}
-              fill="url(#anomalyGradient)"
-              name="anomaly_count"
+              name="score"
             />
           </AreaChart>
         </ResponsiveContainer>
-      </div>
+      </div>}
 
       <div className="flex items-center justify-end gap-6 mt-3 text-xs text-gray-400">
         <div className="flex items-center gap-2">
           <span className="w-3 h-0.5 bg-cyan-400 rounded-full" />
-          <span>Trust Baseline Score</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="w-3 h-0.5 bg-red-400 border border-dashed border-red-400 rounded-full" />
-          <span>Anomaly Activity Spike</span>
+          <span>{usingEventRisk ? 'Runtime Event Risk' : 'Existing Trust Fixture'}</span>
         </div>
       </div>
     </Card>

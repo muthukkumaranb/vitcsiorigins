@@ -13,9 +13,10 @@ import { Activity, ShieldAlert, Users, Layers } from 'lucide-react';
 export const Dashboard: React.FC = () => {
   const dashboardQuery = useDashboardData();
   const identitiesQuery = useIdentitiesData();
-  const { stream } = useLiveBehaviourStream();
+  const streamQuery = useLiveBehaviourStream();
+  const { stream } = streamQuery;
 
-  if (dashboardQuery.isLoading || identitiesQuery.isLoading) {
+  if (dashboardQuery.isLoading) {
     return <LoadingSkeleton rows={6} />;
   }
 
@@ -24,6 +25,7 @@ export const Dashboard: React.FC = () => {
   }
 
   const metrics = dashboardQuery.data;
+  const hasExplicitPrivilege = (identitiesQuery.data || []).some((identity) => identity.privilege_level !== 'NOT_AVAILABLE');
 
   return (
     <div className="space-y-6">
@@ -60,9 +62,9 @@ export const Dashboard: React.FC = () => {
         />
 
         <KpiCard
-          title="PRIVILEGED IDENTITIES"
+          title={hasExplicitPrivilege ? 'PRIVILEGED IDENTITIES' : 'MONITORED IDENTITIES'}
           value={metrics.privileged_identities}
-          subtitle="Monitored High-Trust Accounts"
+          subtitle={hasExplicitPrivilege ? 'Explicit privilege metadata' : 'Ranked by observed runtime risk'}
           trend={metrics.privileged_identities_trend}
           icon={<Users className="w-5 h-5 text-amber-400" />}
           accentColor="amber"
@@ -80,14 +82,14 @@ export const Dashboard: React.FC = () => {
 
       {/* Main Charts Row: Section 9 Trust Landscape + Section 10 Threat Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <TrustLandscapeChart data={metrics.trust_landscape} />
+        <TrustLandscapeChart data={metrics.trust_landscape} events={stream} isLoading={streamQuery.isLoading} isError={streamQuery.isError} onRetry={() => streamQuery.refetch()} />
         <ThreatOverview counts={metrics.threat_severity_counts} />
       </div>
 
       {/* Secondary Row: Section 11 Top Critical Identities + Section 12 Live Stream */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <TopCriticalIdentities identities={identitiesQuery.data || []} />
-        <LiveBehaviourStream events={stream} />
+        <TopCriticalIdentities identities={identitiesQuery.data || []} events={stream} isLoading={identitiesQuery.isLoading} isError={identitiesQuery.isError} onRetry={() => identitiesQuery.refetch()} />
+        <LiveBehaviourStream events={stream} isLoading={streamQuery.isLoading} isError={streamQuery.isError} onRetry={() => streamQuery.refetch()} />
       </div>
     </div>
   );

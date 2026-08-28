@@ -85,6 +85,12 @@ export interface SecurityEvent {
   device?: string;
   ip_address?: string;
   details?: Record<string, any>;
+  risk_score?: number;
+  behaviour_score?: number;
+  sequence_score?: number;
+  signals?: BehaviourSignal[];
+  sequence?: SequenceResult;
+  context?: ContextResult;
 }
 
 export interface BehaviourSequence {

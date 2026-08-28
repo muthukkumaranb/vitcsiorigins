@@ -122,3 +122,20 @@ def test_collection_endpoints_return_live_data():
     assert len(identities) == len(store.users_by_id)
     assert len(alerts) > 0
     assert all(alerts[index]["risk_score"] >= alerts[index + 1]["risk_score"] for index in range(len(alerts) - 1))
+
+
+def test_event_collection_returns_server_scored_runtime_data():
+    response = app.test_client().get("/api/events/")
+    events = response.get_json()
+    assert response.status_code == 200
+    assert len(events) == len(store.events_by_id)
+    assert {"event_id", "event", "risk_score", "severity", "signals", "sequence", "context"}.issubset(events[0])
+    timestamps = [item["event"].get("timestamp", "") for item in events]
+    assert timestamps == sorted(timestamps, reverse=True)
+
+
+def test_event_collection_can_filter_by_user():
+    user_id = store.events_by_id["E0412"]["user_id"]
+    response = app.test_client().get(f"/api/events/?user_id={user_id}")
+    assert response.status_code == 200
+    assert all(item["user_id"] == user_id for item in response.get_json())

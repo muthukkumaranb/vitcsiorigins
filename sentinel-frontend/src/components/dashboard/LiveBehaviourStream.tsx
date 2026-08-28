@@ -5,12 +5,17 @@ import { useNavigate } from 'react-router-dom';
 import { SecurityEvent } from '../../types/security';
 import { Activity, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { EmptyState } from '../common/EmptyState';
+import { ErrorState } from '../common/ErrorState';
 
 interface LiveBehaviourStreamProps {
   events: SecurityEvent[];
+  isLoading?: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
 }
 
-export const LiveBehaviourStream: React.FC<LiveBehaviourStreamProps> = ({ events }) => {
+export const LiveBehaviourStream: React.FC<LiveBehaviourStreamProps> = ({ events, isLoading, isError, onRetry }) => {
   const navigate = useNavigate();
 
   return (
@@ -18,18 +23,18 @@ export const LiveBehaviourStream: React.FC<LiveBehaviourStreamProps> = ({ events
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-base font-bold text-gray-100 flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse-live" />
+            <Activity className="w-4 h-4 text-cyan-400" />
             Live Behaviour Stream
           </h2>
-          <p className="text-xs text-gray-400">Real-time privileged telemetry stream</p>
+          <p className="text-xs text-gray-400">Polling runtime event telemetry every 10 seconds</p>
         </div>
         <span className="px-2 py-0.5 text-[10px] font-mono bg-cyan-950 text-cyan-400 border border-cyan-800 rounded">
-          LIVE FEED
+          POLLING FEED
         </span>
       </div>
 
       <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
-        <AnimatePresence initial={false}>
+        {isLoading ? <div className="space-y-2"><div className="h-16 animate-pulse rounded-lg bg-gray-800/40" /><div className="h-16 animate-pulse rounded-lg bg-gray-800/40" /></div> : isError ? <ErrorState message="Unable to load runtime behaviour events." onRetry={onRetry} /> : events.length === 0 ? <EmptyState title="No Runtime Events" description="No events are currently available from the runtime source." /> : <AnimatePresence initial={false}>
           {events.slice(0, 8).map((evt) => (
             <motion.div
               key={evt.event_id}
@@ -56,6 +61,11 @@ export const LiveBehaviourStream: React.FC<LiveBehaviourStreamProps> = ({ events
                     </span>
                   </div>
                   <p className="text-[11px] text-gray-400 truncate mt-0.5">{evt.description}</p>
+                  <div className="flex flex-wrap gap-2 mt-1 text-[10px] text-gray-500">
+                    {evt.risk_score !== undefined && <span>Risk {evt.risk_score}/100</span>}
+                    {evt.sequence?.chain_detected && <span className="text-amber-400">Sequence detected</span>}
+                    {evt.context?.status && evt.context.status !== 'none' && <span>Context: {evt.context.status}</span>}
+                  </div>
                 </div>
               </div>
 
@@ -71,7 +81,7 @@ export const LiveBehaviourStream: React.FC<LiveBehaviourStreamProps> = ({ events
               </div>
             </motion.div>
           ))}
-        </AnimatePresence>
+        </AnimatePresence>}
       </div>
     </Card>
   );

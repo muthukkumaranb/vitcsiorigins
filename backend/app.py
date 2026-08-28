@@ -44,6 +44,31 @@ def get_event_risk(event_id):
     return jsonify(result), 200
 
 
+@app.route("/api/events/", methods=["GET"])
+def events():
+    user_id = request.args.get("user_id")
+    event_ids = [
+        event_id for event_id, event in store.events_by_id.items()
+        if not user_id or event.get("user_id") == user_id
+    ]
+    results = []
+    for event_id in event_ids:
+        risk = process_event(event_id)
+        results.append({
+            "event_id": event_id,
+            "user_id": risk.get("user_id"),
+            "event": risk.get("event", {}),
+            "behaviour_score": risk.get("behaviour_score", 0.0),
+            "sequence_score": risk.get("sequence_score", 0.0),
+            "risk_score": risk.get("risk_score", 0.0),
+            "severity": risk.get("severity"),
+            "signals": risk.get("signals", []),
+            "sequence": risk.get("sequence", {}),
+            "context": risk.get("context", {}),
+        })
+    return jsonify(sorted(results, key=lambda item: item["event"].get("timestamp", ""), reverse=True)), 200
+
+
 @app.route("/api/events/<event_id>/response/", methods=["GET", "POST"])
 def event_response(event_id):
     try:

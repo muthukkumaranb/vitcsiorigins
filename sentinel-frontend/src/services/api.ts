@@ -114,7 +114,36 @@ export const apiService = {
   getSequence: (userId: string) => fetchJson<BehaviourSequence>(`/investigation/${userId}/sequence`),
   getContext: (userId: string) => fetchJson<ContextAssessment>(`/investigation/${userId}/context`),
   getRelationshipGraph: (userId: string) => fetchJson<RelationshipGraphData>(`/investigation/${userId}/graph`),
-  getEvents: (userId?: string) => fetchJson<SecurityEvent[]>(userId ? `/events?user_id=${userId}` : '/events'),
+  getEvents: async (userId?: string): Promise<SecurityEvent[]> => {
+    const query = userId ? `?user_id=${encodeURIComponent(userId)}` : '';
+    const events = await fetchJson<Array<{
+      event_id: string;
+      user_id: string;
+      event: Record<string, string>;
+      behaviour_score: number;
+      sequence_score: number;
+      risk_score: number;
+      severity: SecurityEvent['risk_level'];
+      signals: SecurityEvent['signals'];
+      sequence: SecurityEvent['sequence'];
+      context: SecurityEvent['context'];
+    }>>(`/api/events/${query}`);
+    return events.map((item) => ({
+      event_id: item.event_id,
+      user_id: item.user_id,
+      timestamp: item.event.timestamp || 'Unknown time',
+      event_type: item.event.event_type || 'Unknown event',
+      risk_level: item.severity,
+      risk_score: item.risk_score,
+      behaviour_score: item.behaviour_score,
+      sequence_score: item.sequence_score,
+      signals: item.signals || [],
+      sequence: item.sequence,
+      context: item.context,
+      description: item.signals?.[0]?.description || 'No behavioural explanation was returned.',
+      details: item.event
+    }));
+  },
   getAnalytics: () => fetchJson<AnalyticsData>('/analytics'),
   getAuditLogs: () => fetchJson<AuditLogEntry[]>('/audit'),
   executeResponse: (payload: ResponseActionPayload) =>
