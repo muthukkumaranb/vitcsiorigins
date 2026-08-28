@@ -12,6 +12,7 @@ import { RelationshipGraph } from '../components/investigation/RelationshipGraph
 import { ResponseActionPanel } from '../components/investigation/ResponseActionPanel';
 import { AnalystFeedbackModal } from '../components/investigation/AnalystFeedbackModal';
 import { MLAssessmentCard } from '../components/investigation/MLAssessmentCard';
+import { AICopilotCard } from '../components/investigation/AICopilotCard';
 import { LoadingSkeleton } from '../components/common/LoadingSkeleton';
 import { ErrorState } from '../components/common/ErrorState';
 import { Badge } from '../components/common/Badge';
@@ -174,6 +175,13 @@ const ProductionInvestigation: React.FC<{ risk: RiskResult; onBack: () => void }
           )}
         </div>
       </div>
+
+      {/* AI Investigation Copilot (Local Ollama) */}
+      <AICopilotCard
+        eventId={risk.event_id}
+        initialNarrative={risk.narrative}
+        initialStatus={risk.narrative_status}
+      />
 
       {/* ML Intelligence Card & Explainability Summary */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -382,6 +390,12 @@ export const Investigation: React.FC = () => {
 
         {/* USP 1 Banner: Authorized Access vs Authorized Behaviour */}
         <AuthVsBehaviourBanner />
+
+        {/* AI Investigation Copilot */}
+        <AICopilotCard
+          eventId={identity.top_event_id || identity.user_id}
+          initialNarrative={null}
+        />
 
         {/* Hero Grid: Context Panel + Explainable Risk Breakdown */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
