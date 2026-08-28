@@ -17,6 +17,16 @@
     --color-info: #06b6d4;
   }
 
+  :root.light {
+    --bg-main: #f8fafc;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f1f5f9;
+    --border-color: #e2e8f0;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+  }
+
   body {
     background-color: var(--bg-main);
     color: var(--text-primary);
@@ -33,6 +43,13 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
 }
 
+:root.light .soc-card {
+  background-color: #ffffff;
+  border-color: #e2e8f0;
+  color: #0f172a;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
 .soc-card-hover {
   transition: all 0.2s ease-in-out;
 }
@@ -41,11 +58,21 @@
   background-color: #161f30;
 }
 
+:root.light .soc-card-hover:hover {
+  border-color: #cbd5e1;
+  background-color: #f8fafc;
+}
+
 .soc-glass {
   background: rgba(17, 24, 39, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(31, 41, 61, 0.6);
+}
+
+:root.light .soc-glass {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 /* Severity Glow Utilities */
@@ -71,13 +98,25 @@
   background: #0b0f17;
 }
 
+:root.light ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
 ::-webkit-scrollbar-thumb {
   background: #1f293d;
   border-radius: 3px;
 }
 
+:root.light ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+
 ::-webkit-scrollbar-thumb:hover {
   background: #374151;
+}
+
+:root.light ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 /* Live stream animation */
