@@ -7,7 +7,7 @@ training candidate datasets without contaminating the baseline dataset.
 
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 try:
     from .features import extract_features
@@ -63,7 +63,7 @@ class FeedbackDatasetBuilder:
             "decision": decision_upper,
             "analyst": analyst,
             "comment": comment,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "is_verified_label": decision_upper in {"CONFIRM_THREAT", "FALSE_POSITIVE"},
             "label": 1 if decision_upper == "CONFIRM_THREAT" else 0 if decision_upper == "FALSE_POSITIVE" else None,
         }
