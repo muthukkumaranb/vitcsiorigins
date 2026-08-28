@@ -5,6 +5,7 @@ try:
     from .data_loader import store
     from .ml.predictor import predict_event
     from .ml.fusion import calculate_hybrid_risk, generate_explainability_summary
+    from .llm import generate_narrative
 except ImportError:
     from data_loader import store
     try:
@@ -14,6 +15,10 @@ except ImportError:
         predict_event = None
         calculate_hybrid_risk = None
         generate_explainability_summary = None
+    try:
+        from llm import generate_narrative
+    except ImportError:
+        generate_narrative = None
 
 LOOKBACK_MINUTES = 60
 
@@ -168,7 +173,7 @@ class EventNotFoundError(Exception):
         super().__init__(f"Event '{event_id}' not found")
 
 
-def process_event(event_id, behaviour_fn=calculate_behaviour, sequence_fn=calculate_sequence, context_fn=evaluate_context):
+def process_event(event_id, behaviour_fn=calculate_behaviour, sequence_fn=calculate_sequence, context_fn=evaluate_context, with_narrative=False):
     event = get_event(event_id)
     if event is None:
         raise EventNotFoundError(event_id)
@@ -208,7 +213,7 @@ def process_event(event_id, behaviour_fn=calculate_behaviour, sequence_fn=calcul
         ml_result,
     ) if generate_explainability_summary else []
 
-    return {
+    res = {
         "event_id": event_id,
         "user_id": event.get("user_id"),
         "user_status": "found" if user else "not_found",
@@ -227,6 +232,17 @@ def process_event(event_id, behaviour_fn=calculate_behaviour, sequence_fn=calcul
         "hybrid_risk": hybrid,
         "explainability_factors": factors,
     }
+
+    if with_narrative:
+        if generate_narrative:
+            narrative_res = generate_narrative(res, kind="event")
+            res["narrative"] = narrative_res.get("narrative")
+            res["narrative_status"] = narrative_res.get("narrative_status", "unavailable")
+        else:
+            res["narrative"] = None
+            res["narrative_status"] = "unavailable"
+
+    return res
 
 
 def ingest_and_process_event(raw_event):

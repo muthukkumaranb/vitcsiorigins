@@ -130,6 +130,16 @@ export interface MLStatus {
   training_metadata: Record<string, any>;
 }
 
+export interface NarrativeResponse {
+  event_id?: string;
+  incident_id?: string;
+  narrative: string | null;
+  narrative_status: 'ok' | 'unavailable';
+  model?: string;
+  cached?: boolean;
+  error?: string;
+}
+
 export interface RiskResult {
   event_id: string;
   user_id: string;
@@ -146,6 +156,8 @@ export interface RiskResult {
   ml_assessment?: MLAssessment;
   hybrid_risk?: HybridRisk;
   explainability_factors?: string[];
+  narrative?: string | null;
+  narrative_status?: 'ok' | 'unavailable';
 }
 
 

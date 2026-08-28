@@ -18,7 +18,8 @@ import {
   ResponseActionPayload,
   AnalystFeedback,
   MLStatus,
-  SecurityIncident
+  SecurityIncident,
+  NarrativeResponse
 } from '../types/security';
 
 
@@ -664,6 +665,28 @@ export const mockApiService = {
       success: true,
       message: 'Successfully rolled back to v1.0.0.',
       active_version: 'v1.0.0'
+    };
+  },
+
+  getEventNarrative: async (eventId: string, _refresh = false): Promise<NarrativeResponse> => {
+    await delay(300);
+    return {
+      event_id: eventId,
+      narrative_status: 'ok',
+      model: 'llama3.1:8b (mock)',
+      cached: false,
+      narrative: `Security event ${eventId} exhibits anomalous behavioural characteristics consistent with elevated risk posture. The deterministic detection engine flagged high-confidence signals alongside sequence deviations. No authorizing operational context was matched for this transaction window.\n\nRecommended next checks:\n• Validate device fingerprint and previous authentication history\n• Inspect resource access logs for concurrent data exfiltration indicators\n• Cross-reference supervisor approval ticket status`
+    };
+  },
+
+  getIncidentNarrative: async (incidentId: string, _refresh = false): Promise<NarrativeResponse> => {
+    await delay(300);
+    return {
+      incident_id: incidentId,
+      narrative_status: 'ok',
+      model: 'llama3.1:8b (mock)',
+      cached: false,
+      narrative: `Correlated incident ${incidentId} represents a multi-stage insider threat sequence spanning Ingress, Privilege Escalation, and Data Access stages. Multiple high-severity behavioural deviations were observed within a compressed timeframe without documented operational justification.\n\nRecommended next checks:\n• Freeze active session tokens for the associated identity\n• Review endpoint privilege modification records\n• Conduct forensic review of accessed sensitive repositories`
     };
   }
 };
