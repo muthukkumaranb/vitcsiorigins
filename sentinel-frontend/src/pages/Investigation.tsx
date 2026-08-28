@@ -11,10 +11,11 @@ import { ContextAssessmentCard } from '../components/investigation/ContextAssess
 import { RelationshipGraph } from '../components/investigation/RelationshipGraph';
 import { ResponseActionPanel } from '../components/investigation/ResponseActionPanel';
 import { AnalystFeedbackModal } from '../components/investigation/AnalystFeedbackModal';
+import { MLAssessmentCard } from '../components/investigation/MLAssessmentCard';
 import { LoadingSkeleton } from '../components/common/LoadingSkeleton';
 import { ErrorState } from '../components/common/ErrorState';
 import { Badge } from '../components/common/Badge';
-import { ShieldAlert, ArrowLeft, Activity, Layers, FileText, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { ShieldAlert, ArrowLeft, Activity, Layers, FileText, CheckCircle2, AlertTriangle, Cpu, HelpCircle } from 'lucide-react';
 import { IS_MOCK_MODE } from '../services';
 import { RiskResult } from '../types/security';
 import {
@@ -32,6 +33,7 @@ import {
 const ProductionInvestigation: React.FC<{ risk: RiskResult; onBack: () => void }> = ({ risk, onBack }) => {
   const event = risk.event || {};
   const isHighOrCritical = risk.severity === 'HIGH' || risk.severity === 'CRITICAL';
+  const hasHybrid = risk.hybrid_risk && risk.hybrid_risk.fusion_mode === 'hybrid_fusion_v1';
 
   return (
     <div className="space-y-6">
@@ -90,6 +92,18 @@ const ProductionInvestigation: React.FC<{ risk: RiskResult; onBack: () => void }
             <p className={`text-xs font-bold uppercase mt-1 ${isHighOrCritical ? 'text-red-300' : 'text-emerald-300'}`}>
               {formatSeverity(risk.severity)} SEVERITY LEVEL
             </p>
+
+            {hasHybrid && risk.hybrid_risk && (
+              <div className="mt-3 px-3 py-1.5 bg-purple-950/40 border border-purple-800/40 rounded-lg flex items-center justify-between text-xs">
+                <span className="text-purple-300 font-semibold flex items-center gap-1.5">
+                  <Cpu className="w-3.5 h-3.5 text-purple-400" />
+                  Hybrid Risk Fusion:
+                </span>
+                <span className="font-mono font-bold text-purple-200">
+                  {risk.hybrid_risk.hybrid_score} / 100
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="mt-6 pt-6 border-t border-[#1f293d] space-y-2.5 text-xs font-mono">
@@ -108,7 +122,9 @@ const ProductionInvestigation: React.FC<{ risk: RiskResult; onBack: () => void }
           </div>
 
           <div className="mt-6 pt-4 border-t border-[#1f293d] text-[11px] font-mono text-gray-500">
-            Formula: clamp((behaviour * 0.6 + sequence * 0.4) * context, 0, 100)
+            {hasHybrid && risk.hybrid_risk
+              ? `Formula: ${risk.hybrid_risk.formula}`
+              : 'Formula: clamp((behaviour * 0.6 + sequence * 0.4) * context, 0, 100)'}
           </div>
         </div>
 
@@ -156,6 +172,41 @@ const ProductionInvestigation: React.FC<{ risk: RiskResult; onBack: () => void }
               <span className="font-bold text-cyan-400">₹{Number(event.transaction_amount).toLocaleString()}</span>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* ML Intelligence Card & Explainability Summary */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-7">
+          <MLAssessmentCard mlAssessment={risk.ml_assessment} />
+        </div>
+
+        {/* Explainability Summary */}
+        <div className="lg:col-span-5 p-6 bg-[#111827] border border-[#1f293d] rounded-xl flex flex-col justify-between">
+          <div>
+            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 mb-3">
+              <HelpCircle className="w-4 h-4 text-cyan-400" />
+              SOC Explainability Factors
+            </h2>
+            <p className="text-xs text-gray-400 mb-3">
+              Automated audit summary of all contributing detection layers.
+            </p>
+
+            {risk.explainability_factors && risk.explainability_factors.length > 0 ? (
+              <ul className="space-y-2">
+                {risk.explainability_factors.map((factor, i) => (
+                  <li key={i} className="p-2.5 bg-[#0b0f17] border border-[#1f293d] rounded text-xs text-gray-200 flex items-start gap-2">
+                    <span className="text-cyan-400 font-bold">•</span>
+                    <span>{factor}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="p-3 bg-[#0b0f17] border border-[#1f293d] rounded text-xs text-gray-500">
+                Baseline activity with no risk elevation factors.
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

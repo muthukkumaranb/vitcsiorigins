@@ -127,9 +127,17 @@ export const TopCriticalIdentities: React.FC<TopCriticalIdentitiesProps> = ({ id
                 </tr>
               );
             })}
+            {identities.length === 0 && (
+              <tr>
+                <td colSpan={5} className="py-8 text-center text-xs text-gray-500 font-sans">
+                  No privileged identities detected in runtime buffer.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
+
     </Card>
   );
 };

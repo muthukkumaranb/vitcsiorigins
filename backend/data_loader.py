@@ -2,44 +2,14 @@
 data_loader.py
 
 Loads the three frozen datasets (user_profiles, events, contexts) from CSV
-into memory and exposes simple indexed lookups.
-
-DATA CONTRACT (frozen — do not rename/add/remove fields):
-
-events.csv:
-    event_id, user_id, timestamp, event_type, resource_id,
-    sensitive_resource_flag, records_accessed, device_id, new_device_flag,
-    permission_change_flag, new_permission_level, beneficiary_id,
-    new_beneficiary_flag, transaction_amount
-
-users.csv (user_profiles):
-    user_id, role, actor_type, peer_group_id, typical_login_hour,
-    login_hour_spread, avg_session_minutes, session_spread, avg_txn_amount,
-    txn_amount_spread, avg_txn_per_day, home_device
-
-context.csv (contexts):
-    context_id, related_user_id, type, start_time, end_time,
-    manager_approval_flag
-
-Notes on real data observed during inspection (2026-03 sample):
-    - events.csv has 412 rows, no duplicate event_ids, every event_id's
-    user_id exists in users.csv.
-  - Several event columns are legitimately blank depending on event_type
-    (resource_id, new_permission_level, beneficiary_id). These are NOT
-    data errors — they are populated only for the relevant event_type
-    (e.g. new_permission_level only for permission_change events).
-  - context.csv currently has only ONE row. Contexts are matched to
-    events by (related_user_id == event.user_id) AND
-    (start_time <= event.timestamp <= end_time). Most events therefore
-    have NO matching context, which is expected, not an error.
-  - All timestamps are ISO-8601 strings without timezone info
-    (e.g. "2026-03-02T01:05:00") and parse cleanly with
-    datetime.fromisoformat.
+into memory and exposes simple indexed lookups with thread-safe concurrency.
 """
 
 import csv
 import os
-from datetime import datetime
+import threading
+from collections import deque
+from datetime import datetime, timezone
 
 REPOSITORY_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(REPOSITORY_ROOT, "output")
@@ -48,57 +18,65 @@ EVENTS_PATH = os.path.join(DATA_DIR, "events.csv")
 USERS_PATH = os.path.join(DATA_DIR, "users.csv")
 CONTEXT_PATH = os.path.join(DATA_DIR, "context.csv")
 
+MAX_LIVE_EVENTS = 500
+
 
 def _parse_timestamp(value):
-    """Parse an ISO-8601 timestamp string. Returns None if blank/invalid."""
+    """Parse an ISO-8601 timestamp string. Returns naive UTC datetime or None."""
     if not value:
         return None
     try:
-        return datetime.fromisoformat(value)
-    except ValueError:
+        val_str = str(value).strip().replace(" ", "T")
+        if val_str.endswith("Z"):
+            val_str = val_str[:-1] + "+00:00"
+        dt = datetime.fromisoformat(val_str)
+        if dt.tzinfo is not None:
+            dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+        return dt
+    except (ValueError, TypeError):
         return None
+
 
 
 class DataStore:
     """
-    In-memory store for the three frozen datasets.
-
-    This intentionally avoids a database: the datasets are small, static
-    CSV files, so simple dict/list indices in memory satisfy the
-    requirements without unnecessary infrastructure.
+    Thread-safe in-memory store for the three frozen datasets and bounded live telemetry buffer.
     """
 
     def __init__(self, events_path=EVENTS_PATH, users_path=USERS_PATH,
-                 context_path=CONTEXT_PATH):
+                 context_path=CONTEXT_PATH, max_live_events=MAX_LIVE_EVENTS):
         self.events_path = events_path
         self.users_path = users_path
         self.context_path = context_path
+        self.max_live_events = max_live_events
+        self._lock = threading.RLock()
 
         self.events_by_id = {}
+        self._baseline_event_ids = set()
+        self._live_event_ids = deque(maxlen=self.max_live_events)
         self.users_by_id = {}
-        self.contexts = []  # list of dicts, each with parsed start/end
+        self.contexts = []
 
         self._load()
 
     def _load(self):
-        self.events_by_id = self._load_events(self.events_path)
-        self.users_by_id = self._load_users(self.users_path)
-        self.contexts = self._load_contexts(self.context_path)
+        with self._lock:
+            self.events_by_id = self._load_events(self.events_path)
+            self._baseline_event_ids = set(self.events_by_id.keys())
+            self._live_event_ids.clear()
+            self.users_by_id = self._load_users(self.users_path)
+            self.contexts = self._load_contexts(self.context_path)
 
     @staticmethod
     def _load_events(path):
         events_by_id = {}
+        if not os.path.exists(path):
+            return events_by_id
         with open(path, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
                 event_id = row.get("event_id")
-                if not event_id:
-                    # Malformed row with no event_id — skip but don't crash.
-                    continue
-                if event_id in events_by_id:
-                    # Duplicate event_id — data integrity issue. Keep the
-                    # first occurrence and surface a marker rather than
-                    # silently overwriting.
+                if not event_id or event_id in events_by_id:
                     continue
                 row["_parsed_timestamp"] = _parse_timestamp(row.get("timestamp"))
                 events_by_id[event_id] = row
@@ -107,6 +85,8 @@ class DataStore:
     @staticmethod
     def _load_users(path):
         users_by_id = {}
+        if not os.path.exists(path):
+            return users_by_id
         with open(path, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
@@ -129,11 +109,59 @@ class DataStore:
                 contexts.append(row)
         return contexts
 
+    def get_event(self, event_id):
+        with self._lock:
+            return self.events_by_id.get(event_id)
+
+    def get_all_event_ids(self):
+        with self._lock:
+            return list(self.events_by_id.keys())
+
+    def get_all_events(self):
+        with self._lock:
+            return [dict(e) for e in self.events_by_id.values()]
+
+    def add_event(self, event_dict):
+        """
+        Dynamically ingest a single validated event into the bounded live buffer (thread-safe).
+        """
+        if not isinstance(event_dict, dict):
+            raise ValueError("Event must be a dictionary")
+        event_id = event_dict.get("event_id")
+        if not event_id:
+            raise ValueError("Event must contain a non-empty 'event_id'")
+
+        item = dict(event_dict)
+        if "_parsed_timestamp" not in item or item["_parsed_timestamp"] is None:
+            item["_parsed_timestamp"] = _parse_timestamp(item.get("timestamp"))
+
+        with self._lock:
+            # Manage bounded buffer: evict oldest live event if limit reached
+            if len(self._live_event_ids) >= self.max_live_events and event_id not in self.events_by_id:
+                oldest_id = self._live_event_ids.popleft()
+                if oldest_id not in self._baseline_event_ids and oldest_id in self.events_by_id:
+                    del self.events_by_id[oldest_id]
+
+            self.events_by_id[event_id] = item
+            if event_id not in self._baseline_event_ids:
+                self._live_event_ids.append(event_id)
+
+        return item
+
+    def reset_live_events(self):
+        """
+        Clears all dynamic live/simulated events, restoring the clean frozen baseline.
+        """
+        with self._lock:
+            for eid in list(self._live_event_ids):
+                if eid not in self._baseline_event_ids and eid in self.events_by_id:
+                    del self.events_by_id[eid]
+            self._live_event_ids.clear()
+
     def reload(self):
         """Re-read all datasets from disk (useful for tests)."""
         self._load()
 
 
-# Module-level singleton, loaded once on import. Simple and sufficient
-# for this milestone (no hot-reloading / multi-process concerns).
+# Module-level singleton
 store = DataStore()

@@ -1,12 +1,22 @@
 """Deterministic SENTINEL behaviour, sequence, context, and risk engine."""
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 try:
     from .data_loader import store
+    from .ml.predictor import predict_event
+    from .ml.fusion import calculate_hybrid_risk, generate_explainability_summary
 except ImportError:
     from data_loader import store
+    try:
+        from ml.predictor import predict_event
+        from ml.fusion import calculate_hybrid_risk, generate_explainability_summary
+    except ImportError:
+        predict_event = None
+        calculate_hybrid_risk = None
+        generate_explainability_summary = None
 
 LOOKBACK_MINUTES = 60
+
 SEQUENCE_STEPS = (
     ("UNUSUAL_LOGIN", lambda e, u: e.get("event_type") == "login" and (_flag(e, "new_device_flag") or _login_deviation(e, u) > _number(u, "login_hour_spread"))),
     ("SENSITIVE_ACCESS", lambda e, u: _flag(e, "sensitive_resource_flag")),
@@ -164,13 +174,40 @@ def process_event(event_id, behaviour_fn=calculate_behaviour, sequence_fn=calcul
         raise EventNotFoundError(event_id)
     user = get_user_profile(event.get("user_id"))
     timestamp = event.get("_parsed_timestamp")
-    history = [item for item in store.events_by_id.values() if item.get("user_id") == event.get("user_id") and item.get("_parsed_timestamp") is not None and timestamp is not None and timestamp - timedelta(minutes=LOOKBACK_MINUTES) <= item["_parsed_timestamp"] < timestamp]
+    history = [item for item in store.get_all_events() if item.get("user_id") == event.get("user_id") and item.get("_parsed_timestamp") is not None and timestamp is not None and timestamp - timedelta(minutes=LOOKBACK_MINUTES) <= item["_parsed_timestamp"] < timestamp]
     context = get_context(event)
     behaviour = behaviour_fn(event, user, history)
     sequence = sequence_fn(event, user, history)
     context_result = context_fn(event, context)
     context_multiplier = context_result.get("context_multiplier", 1.0)
     risk_score = combine_risk_score(behaviour.get("behaviour_score", 0), sequence.get("sequence_score", 0), context_multiplier)
+
+    # ML Assessment & Hybrid Risk Fusion Layer
+    ml_result = predict_event(event, user, history) if predict_event else {
+        "status": "unavailable",
+        "message": "ML predictor not loaded",
+        "attack_probability": None,
+        "prediction": None,
+        "features": {},
+        "contributing_features": [],
+    }
+
+    ml_prob = ml_result.get("attack_probability")
+    hybrid = calculate_hybrid_risk(behaviour.get("behaviour_score", 0), sequence.get("sequence_score", 0), ml_prob, context_multiplier) if calculate_hybrid_risk else {
+        "hybrid_score": risk_score,
+        "fusion_mode": "deterministic_fallback",
+        "weights": {"behaviour": 0.60, "sequence": 0.40, "ml": 0.0},
+        "formula": "clamp((behaviour * 0.60 + sequence * 0.40) * context, 0, 100)",
+    }
+
+    seq_data = {"chain_detected": sequence.get("chain_detected", False), "matched_steps": sequence.get("matched_steps", [])}
+    factors = generate_explainability_summary(
+        behaviour.get("signals", []),
+        seq_data,
+        {"status": context_result.get("context_status", "no_context_found")},
+        ml_result,
+    ) if generate_explainability_summary else []
+
     return {
         "event_id": event_id,
         "user_id": event.get("user_id"),
@@ -183,7 +220,59 @@ def process_event(event_id, behaviour_fn=calculate_behaviour, sequence_fn=calcul
         "severity": classify_severity(risk_score),
         "signals": behaviour.get("signals", []),
         "risk_breakdown": {**behaviour.get("risk_breakdown", {}), "sequence": sequence.get("sequence_score", 0.0)},
-        "sequence": {"chain_detected": sequence.get("chain_detected", False), "matched_steps": sequence.get("matched_steps", [])},
+        "sequence": seq_data,
         "context": {"status": context_result.get("context_status", "no_context_found"), "info": context_result.get("context_info")},
         "context_status": context_result.get("context_status", "no_context_found"),
+        "ml_assessment": ml_result,
+        "hybrid_risk": hybrid,
+        "explainability_factors": factors,
+    }
+
+
+def ingest_and_process_event(raw_event):
+    """
+    Unified Ingestion & Processing Pipeline:
+    1. Schema validation.
+    2. Dynamic storage in DataStore bounded buffer.
+    3. Real-time scoring through feature extraction, behaviour, sequence, ML, and fusion.
+    4. Alert evaluation and audit generation.
+    """
+    if not isinstance(raw_event, dict):
+        raise ValueError("Event must be a JSON object")
+
+    event_id = raw_event.get("event_id")
+    user_id = raw_event.get("user_id")
+    if not event_id or not user_id:
+        raise ValueError("Event must contain 'event_id' and 'user_id'")
+
+    if not raw_event.get("timestamp"):
+        raw_event["timestamp"] = datetime.utcnow().isoformat()
+
+    # Store event in bounded live buffer
+    store.add_event(raw_event)
+
+    # Execute full detection pipeline
+    result = process_event(event_id)
+
+    # Determine if alert is triggered
+    is_alert = result["severity"] in {"HIGH", "CRITICAL"}
+    alert_info = None
+    if is_alert:
+        alert_info = {
+            "alert_id": f"ALT-{event_id}",
+            "event_id": event_id,
+            "user_id": user_id,
+            "risk_score": result["risk_score"],
+            "severity": result["severity"],
+            "timestamp": result["event"].get("timestamp"),
+            "signals": result["signals"],
+            "chain_detected": result["sequence"]["chain_detected"],
+        }
+
+    return {
+        "success": True,
+        "event_id": event_id,
+        "is_alert": is_alert,
+        "alert": alert_info,
+        "assessment": result,
     }

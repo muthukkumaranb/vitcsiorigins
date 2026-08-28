@@ -1,0 +1,47 @@
+{
+  "active_version": "v1.0.0",
+  "previous_version": "v1.0.0",
+  "versions": {
+    "v1.0.0": {
+      "version": "v1.0.0",
+      "model_name": "RandomForestClassifier",
+      "status": "active",
+      "registered_at": "2026-08-28T18:24:24.206657Z",
+      "description": "Baseline Random Forest classifier trained on stratified scenario splits.",
+      "metrics": {
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0,
+        "false_positive_rate": 0.0,
+        "false_negative_rate": 0.0
+      },
+      "promotion_reason": "Initial baseline model certification."
+    },
+    "v1.1.0-test": {
+      "version": "v1.1.0-test",
+      "model_name": "RandomForestClassifier",
+      "status": "rolled_back",
+      "registered_at": "2026-08-28T19:02:19.994223Z",
+      "artifact_path": "D:\\Muthukkumaran\\vitcsiorigins\\backend\\ml\\artifacts\\sentinel_rf_v1_1_0_test.pkl",
+      "description": "Button test candidate",
+      "metrics": {
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0,
+        "false_positive_rate": 0.0,
+        "false_negative_rate": 0.0,
+        "roc_auc": 1.0,
+        "sample_count": 221,
+        "confusion_matrix": {
+          "true_negatives": 218,
+          "false_positives": 0,
+          "false_negatives": 0,
+          "true_positives": 3
+        }
+      },
+      "promoted_at": "2026-08-28T19:02:19.996227Z"
+    }
+  }
+}

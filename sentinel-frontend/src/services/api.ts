@@ -13,10 +13,16 @@ import {
   AuditLogResponse,
   AuditQueryParams,
   ResponseActionPayload,
-  AnalystFeedback
+  AnalystFeedback,
+  MLStatus,
+  SecurityIncident,
+  RiskResult,
+  SimulationStatus,
+  ModelRegistryData
 } from '../types/security';
-import { RiskResult } from '../types/security';
+
 import { formatSignal } from '../utils/formatters';
+
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000').replace(/\/$/, '');
 
@@ -66,6 +72,9 @@ export const apiService = {
       event?: Record<string, string>;
       sequence?: RiskResult['sequence'];
       context?: RiskResult['context'];
+      ml_assessment?: RiskResult['ml_assessment'];
+      hybrid_risk?: RiskResult['hybrid_risk'];
+      explainability_factors?: string[];
     }>(`/api/events/${eventId}/risk/`);
     return {
       event_id: raw.event_id,
@@ -79,9 +88,15 @@ export const apiService = {
       signals: raw.signals || [],
       risk_breakdown: {},
       sequence: raw.sequence || { chain_detected: false, matched_steps: [] },
-      context: raw.context || { status: raw.context_status === 'found' ? 'matched' : 'none', info: null }
+      context: raw.context || { status: raw.context_status === 'found' ? 'matched' : 'none', info: null },
+      ml_assessment: raw.ml_assessment,
+      hybrid_risk: raw.hybrid_risk,
+      explainability_factors: raw.explainability_factors,
     };
   },
+  getMLStatus: (): Promise<MLStatus> => fetchJson<MLStatus>('/api/ml/status'),
+  getIncidents: (): Promise<SecurityIncident[]> => fetchJson<SecurityIncident[]>('/api/incidents'),
+  getIncident: (incidentId: string): Promise<SecurityIncident> => fetchJson<SecurityIncident>(`/api/incidents/${incidentId}`),
   getBaseline: (userId: string) => fetchJson<BaselineMetric[]>(`/investigation/${userId}/baseline`),
   getPeerAnalysis: (userId: string) => fetchJson<PeerComparisonMetric[]>(`/investigation/${userId}/peer`),
   getSequence: (userId: string) => fetchJson<BehaviourSequence>(`/investigation/${userId}/sequence`),
@@ -111,8 +126,40 @@ export const apiService = {
       body: JSON.stringify(payload)
     }),
   submitFeedback: (feedback: AnalystFeedback) =>
-    fetchJson<{ success: boolean; message: string }>('/feedback', {
+    fetchJson<{ success: boolean; message: string }>('/api/feedback', {
       method: 'POST',
       body: JSON.stringify(feedback)
-    })
+    }),
+  getSimulationStatus: (): Promise<SimulationStatus> =>
+    fetchJson<SimulationStatus>('/api/simulation/status'),
+  startSimulation: (mode = 'mixed', interval_ms = 2000): Promise<SimulationStatus> =>
+    fetchJson<SimulationStatus>('/api/simulation/start', {
+      method: 'POST',
+      body: JSON.stringify({ mode, interval_ms })
+    }),
+  pauseSimulation: (): Promise<SimulationStatus> =>
+    fetchJson<SimulationStatus>('/api/simulation/pause', { method: 'POST' }),
+  stopSimulation: (): Promise<SimulationStatus> =>
+    fetchJson<SimulationStatus>('/api/simulation/stop', { method: 'POST' }),
+  resetSimulation: (): Promise<SimulationStatus> =>
+    fetchJson<SimulationStatus>('/api/simulation/reset', { method: 'POST' }),
+  stepSimulation: (mode?: string): Promise<any> =>
+    fetchJson<any>('/api/simulation/step', {
+      method: 'POST',
+      body: JSON.stringify({ mode })
+    }),
+  getMLRegistry: (): Promise<ModelRegistryData> =>
+    fetchJson<ModelRegistryData>('/api/ml/registry'),
+  trainCandidateModel: (version?: string, description?: string): Promise<any> =>
+    fetchJson<any>('/api/ml/train-candidate', {
+      method: 'POST',
+      body: JSON.stringify({ version, description })
+    }),
+  promoteModel: (version: string, override = false): Promise<any> =>
+    fetchJson<any>('/api/ml/promote', {
+      method: 'POST',
+      body: JSON.stringify({ version, override })
+    }),
+  rollbackModel: (): Promise<any> =>
+    fetchJson<any>('/api/ml/rollback', { method: 'POST' })
 };

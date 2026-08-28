@@ -21,13 +21,17 @@ except ImportError:
 def get_all_scored_events():
     """Evaluate and return scored event records sorted chronologically."""
     scored = []
-    for event_id in store.events_by_id:
-        result = process_event(event_id)
-        scored.append(result)
+    for event_id in store.get_all_event_ids():
+        try:
+            result = process_event(event_id)
+            scored.append(result)
+        except Exception:
+            continue
 
     # Sort chronologically by timestamp
     scored.sort(key=lambda item: item["event"].get("timestamp") or "")
     return scored
+
 
 
 def get_security_analysis():

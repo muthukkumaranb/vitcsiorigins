@@ -383,3 +383,33 @@ export function formatOptionalValue(value: string | undefined | null, fallback =
   }
   return value.trim();
 }
+
+/**
+ * Maps internal ML feature vector keys to clear, human-readable SOC feature names.
+ */
+export function formatMLFeatureName(featureKey: string | undefined | null): string {
+  if (!featureKey) return 'Unknown Feature';
+
+  const ML_FEATURE_MAP: Record<string, string> = {
+    login_deviation_score: 'Login Hour Deviation',
+    after_hours_flag: 'Off-Hours Activity',
+    new_device_flag: 'Unfamiliar Device',
+    sensitive_access_flag: 'Sensitive Resource Access',
+    records_accessed_score: 'Bulk Record Query Volume',
+    permission_change_flag: 'Privilege Escalation',
+    new_beneficiary_flag: 'Beneficiary Created / Modified',
+    transaction_amount_score: 'High Transaction Amount',
+    transaction_frequency_score: 'Daily Transaction Spike',
+    sequence_matched_ratio: 'Attack Chain Progression',
+  };
+
+  const normalized = featureKey.trim().toLowerCase();
+  if (ML_FEATURE_MAP[normalized]) {
+    return ML_FEATURE_MAP[normalized];
+  }
+
+  // Fallback: title case
+  return featureKey
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}

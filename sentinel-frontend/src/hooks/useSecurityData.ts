@@ -7,7 +7,10 @@ export function useDashboardData() {
   return useQuery({
     queryKey: ['dashboard'],
     queryFn: securityService.getDashboard,
-    refetchInterval: 10000
+    refetchInterval: 6000,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
+    placeholderData: (previousData) => previousData,
   });
 }
 
@@ -15,16 +18,23 @@ export function useThreatsData() {
   return useQuery({
     queryKey: ['threats'],
     queryFn: securityService.getThreats,
-    refetchInterval: 8000
+    refetchInterval: 6000,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
+    placeholderData: (previousData) => previousData,
   });
 }
 
 export function useIdentitiesData() {
   return useQuery({
     queryKey: ['identities'],
-    queryFn: securityService.getIdentities
+    queryFn: securityService.getIdentities,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
+    placeholderData: (previousData) => previousData,
   });
 }
+
 
 export function useIdentityData(userId: string) {
   return useQuery({
