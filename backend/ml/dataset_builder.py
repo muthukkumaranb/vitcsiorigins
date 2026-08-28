@@ -9,12 +9,9 @@ import os
 import json
 from datetime import datetime, timezone
 
-try:
-    from .features import extract_features
-    from ..data_loader import store
-except ImportError:
-    from ml.features import extract_features
-    from data_loader import store
+from .features import extract_features
+from ..data_loader import store
+
 
 FEEDBACK_FILE = os.path.join(os.path.dirname(__file__), "..", "..", "data", "analyst_feedback.json")
 

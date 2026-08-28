@@ -1,24 +1,11 @@
 """Deterministic SENTINEL behaviour, sequence, context, and risk engine."""
 from datetime import datetime, timedelta
 
-try:
-    from .data_loader import store
-    from .ml.predictor import predict_event
-    from .ml.fusion import calculate_hybrid_risk, generate_explainability_summary
-    from .llm import generate_narrative
-except ImportError:
-    from data_loader import store
-    try:
-        from ml.predictor import predict_event
-        from ml.fusion import calculate_hybrid_risk, generate_explainability_summary
-    except ImportError:
-        predict_event = None
-        calculate_hybrid_risk = None
-        generate_explainability_summary = None
-    try:
-        from llm import generate_narrative
-    except ImportError:
-        generate_narrative = None
+from .data_loader import store
+from .ml.predictor import predict_event
+from .ml.fusion import calculate_hybrid_risk, generate_explainability_summary
+from .llm import generate_narrative
+
 
 LOOKBACK_MINUTES = 60
 
