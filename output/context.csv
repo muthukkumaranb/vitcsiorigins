@@ -1,0 +1,2 @@
+context_id,related_user_id,type,start_time,end_time,manager_approval_flag
+CTX_SCEN_3_FALSE_POSITIVE,U004,active_incident,2026-03-07T01:30:00,2026-03-07T02:45:00,1
