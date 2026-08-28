@@ -7,7 +7,7 @@ Provides lightweight model version control, promotion gating, and rollback capab
 import os
 import json
 import shutil
-from datetime import datetime
+from datetime import datetime, timezone
 
 REGISTRY_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "models")
 REGISTRY_FILE = os.path.join(REGISTRY_DIR, "registry.json")
@@ -53,7 +53,7 @@ class ModelRegistry:
                     "version": "v1.0.0",
                     "model_name": "RandomForestClassifier",
                     "status": "active",
-                    "registered_at": datetime.utcnow().isoformat() + "Z",
+                    "registered_at": datetime.now(timezone.utc).isoformat(),
                     "description": "Baseline Random Forest classifier trained on stratified scenario splits.",
                     "metrics": {
                         "accuracy": 1.0,
@@ -87,7 +87,7 @@ class ModelRegistry:
             "version": version,
             "model_name": model_name,
             "status": "candidate",
-            "registered_at": datetime.utcnow().isoformat() + "Z",
+            "registered_at": datetime.now(timezone.utc).isoformat(),
             "artifact_path": artifact_path,
             "description": description or f"Candidate model {version} trained on verified telemetry and analyst feedback.",
             "metrics": metrics,
@@ -151,7 +151,7 @@ class ModelRegistry:
             self._data["previous_version"] = current_active
 
         candidate["status"] = "active"
-        candidate["promoted_at"] = datetime.utcnow().isoformat() + "Z"
+        candidate["promoted_at"] = datetime.now(timezone.utc).isoformat()
         self._data["active_version"] = candidate_version
         self._save()
 
