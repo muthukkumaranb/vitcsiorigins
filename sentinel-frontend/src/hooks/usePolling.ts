@@ -30,14 +30,23 @@ export function useLiveBehaviourStream() {
 
     // Timer to increment last updated counter
     const timer = setInterval(() => {
-      setLastUpdated((prev) => prev + 1);
+      if (isMounted) {
+        setLastUpdated((prev) => prev + 1);
+      }
     }, 1000);
 
     if (!IS_MOCK_MODE) {
-      fetchStream();
+      const runInitial = async () => {
+        if (!isMounted) return;
+        await fetchStream();
+      };
+      runInitial();
+
       const pollInterval = setInterval(() => {
-        if (isMounted) fetchStream();
-      }, 3000);
+        if (isMounted && typeof document !== 'undefined' && !document.hidden) {
+          fetchStream();
+        }
+      }, 5000);
 
       return () => {
         isMounted = false;
@@ -48,6 +57,7 @@ export function useLiveBehaviourStream() {
 
     // Simulated stream in mock mode
     const eventTimer = setInterval(() => {
+      if (!isMounted) return;
       const randomUsers = [
         { id: 'U0345', name: 'Vikram Sharma', role: 'Finance Ops' },
         { id: 'U0123', name: 'Priya Sundaram', role: 'Core DB Admin' },
@@ -81,7 +91,7 @@ export function useLiveBehaviourStream() {
 
       setStream((prev) => [newEvent, ...prev.slice(0, 49)]);
       setLastUpdated(0);
-    }, 4000);
+    }, 5000);
 
     return () => {
       isMounted = false;

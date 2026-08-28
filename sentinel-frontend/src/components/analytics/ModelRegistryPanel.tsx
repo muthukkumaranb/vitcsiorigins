@@ -2,9 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ArrowUpRight, RotateCcw, Play, CheckCircle, AlertTriangle, Cpu } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { ModelRegistryData, ModelRegistryVersion } from '../../types/security';
+import { useAuth } from '../../context/AuthContext';
 
 
 export const ModelRegistryPanel: React.FC = () => {
+  const { canPerformAction } = useAuth();
+  const canRetrain = canPerformAction('retrain');
+
   const [registry, setRegistry] = useState<ModelRegistryData | null>(null);
   const [loading, setLoading] = useState(false);
   const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -21,6 +25,7 @@ export const ModelRegistryPanel: React.FC = () => {
   useEffect(() => {
     fetchRegistry();
   }, [fetchRegistry]);
+
 
   const handleTrainCandidate = async () => {
     setLoading(true);
@@ -92,27 +97,36 @@ export const ModelRegistryPanel: React.FC = () => {
 
         {/* Action Controls */}
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleTrainCandidate}
-            disabled={loading}
-            className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition disabled:opacity-50 shadow-md shadow-indigo-950"
-          >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            Train Candidate Model
-          </button>
+          {!canRetrain ? (
+            <span className="text-[11px] text-indigo-300 bg-indigo-950/40 border border-indigo-800/40 px-3 py-1.5 rounded-lg font-mono">
+              Retraining restricted to SOC Admin
+            </span>
+          ) : (
+            <>
+              <button
+                onClick={handleTrainCandidate}
+                disabled={loading}
+                className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition disabled:opacity-50 shadow-md shadow-indigo-950 cursor-pointer"
+              >
+                <Play className="w-3.5 h-3.5 fill-current" />
+                Train Candidate Model
+              </button>
 
-          {registry?.previous_version && (
-            <button
-              onClick={handleRollback}
-              disabled={loading}
-              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs font-semibold px-3 py-2 rounded-lg transition border border-amber-900/40 disabled:opacity-50"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              Rollback to {registry.previous_version}
-            </button>
+              {registry?.previous_version && (
+                <button
+                  onClick={handleRollback}
+                  disabled={loading}
+                  className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs font-semibold px-3 py-2 rounded-lg transition border border-amber-900/40 disabled:opacity-50 cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Rollback to {registry.previous_version}
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
+
 
       {/* Action Notification Message */}
       {actionMessage && (

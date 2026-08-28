@@ -52,12 +52,30 @@ def _classify_event_stage(event_type, signals):
     return "STAGE_1", "Ingress & Credential Usage"
 
 
+import threading
+
+_INCIDENTS_CACHE = None
+_INCIDENTS_CACHE_KEY = None
+_INCIDENTS_CACHE_LOCK = threading.Lock()
+
+
 def correlate_incidents(lookback_window_minutes=120):
     """
-    Scans all loaded telemetry and groups suspicious sequences into correlated incidents.
+    Scans all loaded telemetry and groups suspicious sequences into correlated incidents with thread-safe caching.
     """
+    global _INCIDENTS_CACHE, _INCIDENTS_CACHE_KEY
+
+    event_ids = store.get_all_event_ids()
+    current_key = (len(store.events_by_id), len(getattr(store, '_live_event_ids', [])), event_ids[-1] if event_ids else None)
+
+
+    with _INCIDENTS_CACHE_LOCK:
+        if _INCIDENTS_CACHE is not None and _INCIDENTS_CACHE_KEY == current_key:
+            return list(_INCIDENTS_CACHE)
+
     # Group events by user_id
     user_events = {}
+
     for event in store.get_all_events():
         eid = event.get("event_id")
         uid = event.get("user_id")
@@ -155,7 +173,12 @@ def correlate_incidents(lookback_window_minutes=120):
 
     # Sort incidents by max_risk_score desc
     incidents.sort(key=lambda x: x["max_risk_score"], reverse=True)
-    return incidents
+
+    with _INCIDENTS_CACHE_LOCK:
+        _INCIDENTS_CACHE = incidents
+        _INCIDENTS_CACHE_KEY = current_key
+        return list(_INCIDENTS_CACHE)
+
 
 
 _CACHED_INCIDENTS = None
