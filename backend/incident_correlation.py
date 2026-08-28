@@ -7,14 +7,10 @@ classifying attack progression across SOC stages and assigning incident IDs.
 
 from datetime import datetime, timedelta
 
-try:
-    from .data_loader import store
-    from .processor import process_event
-    from .ml.fusion import classify_severity
-except ImportError:
-    from data_loader import store
-    from processor import process_event
-    from ml.fusion import classify_severity
+from .data_loader import store
+from .processor import process_event
+from .ml.fusion import classify_severity
+
 
 
 STAGE_DEFINITIONS = [

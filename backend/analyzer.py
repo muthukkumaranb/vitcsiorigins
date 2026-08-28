@@ -10,12 +10,9 @@ Does NOT access ground_truth.csv.
 from collections import defaultdict
 from datetime import datetime
 
-try:
-    from .data_loader import store
-    from .processor import process_event
-except ImportError:
-    from data_loader import store
-    from processor import process_event
+from .data_loader import store
+from .processor import process_event
+
 
 
 def get_all_scored_events():

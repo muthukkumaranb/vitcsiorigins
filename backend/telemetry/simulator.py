@@ -9,16 +9,11 @@ import threading
 import time
 from datetime import datetime
 
-try:
-    from .event_generator import EventGenerator
-    from .scenarios import SCENARIOS
-    from ..processor import ingest_and_process_event
-    from ..data_loader import store
-except ImportError:
-    from telemetry.event_generator import EventGenerator
-    from telemetry.scenarios import SCENARIOS
-    from processor import ingest_and_process_event
-    from data_loader import store
+from .event_generator import EventGenerator
+from .scenarios import SCENARIOS
+from ..processor import ingest_and_process_event
+from ..data_loader import store
+
 
 
 class TelemetrySimulator:
