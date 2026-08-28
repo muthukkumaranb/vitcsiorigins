@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { securityService } from '../services';
 import { IS_MOCK_MODE } from '../services';
-import { ResponseActionPayload, AnalystFeedback, RiskAssessment, RiskResult } from '../types/security';
+import { ResponseActionPayload, AnalystFeedback, RiskAssessment, RiskResult, AuditQueryParams } from '../types/security';
 
 export function useDashboardData() {
   return useQuery({
@@ -111,11 +111,11 @@ export function useAnalyticsData() {
   });
 }
 
-export function useAuditLogsData() {
+export function useAuditLogsData(params?: AuditQueryParams) {
   return useQuery({
-    queryKey: ['auditLogs'],
-    queryFn: securityService.getAuditLogs,
-    refetchInterval: 5000
+    queryKey: ['auditLogs', params],
+    queryFn: () => securityService.getAuditLogs(params),
+    refetchInterval: 10000
   });
 }
 

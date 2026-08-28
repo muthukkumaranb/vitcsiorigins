@@ -189,6 +189,45 @@ export interface AuditLogEntry {
   details?: string;
 }
 
+export interface AuditEventItem {
+  event_id: string;
+  timestamp: string;
+  user_id: string;
+  event_type: string;
+  risk_score: number;
+  severity: 'LOW' | 'MODERATE' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  behaviour_score: number;
+  sequence_score: number;
+  context: {
+    status: string;
+    multiplier: number;
+    info: Record<string, any> | null;
+  };
+  sequence: {
+    chain_detected: boolean;
+    matched_steps: Array<{ step: string; event_id: string; timestamp: string; matched: boolean }>;
+  };
+  signals: BehaviourSignal[];
+  event: Record<string, any>;
+}
+
+export interface AuditLogResponse {
+  items: AuditEventItem[];
+  total: number;
+}
+
+export interface AuditQueryParams {
+  severity?: string;
+  user_id?: string;
+  event_type?: string;
+  start?: string;
+  end?: string;
+  limit?: number;
+  offset?: number;
+  sort_by?: 'timestamp' | 'risk_score' | 'severity' | 'event_id';
+  order?: 'asc' | 'desc';
+}
+
 export interface DashboardMetrics {
   behavioural_trust_score: number;
   behavioural_trust_trend: number;
