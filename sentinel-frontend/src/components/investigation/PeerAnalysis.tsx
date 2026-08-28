@@ -1,7 +1,9 @@
 import React from 'react';
 import { Card } from '../common/Card';
 import { PeerComparisonMetric } from '../../types/security';
-import { Users, AlertCircle } from 'lucide-react';
+import { Users } from 'lucide-react';
+
+
 
 interface PeerAnalysisProps {
   peerMetrics: PeerComparisonMetric[];

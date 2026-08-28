@@ -185,6 +185,9 @@ def get_security_analysis():
             else "MEDIUM"
         )
 
+        top_evt = max(u_items, key=lambda i: i["risk_score"], default=None)
+        top_event_id = top_evt["event_id"] if top_evt else None
+
         identity_entry = {
             "user_id": user_id,
             "name": user_id,
@@ -193,6 +196,7 @@ def get_security_analysis():
             "department": u_profile.get("peer_group_id") or "General Staff",
             "peer_group": u_profile.get("peer_group_id") or "General Staff",
             "privilege_level": privilege_level,
+            "top_event_id": top_event_id,
             "risk_score": round(max_risk, 1),
             "trust_score": round(max(0.0, 100.0 - max_risk), 1),
             "event_count": e_count,
@@ -213,6 +217,7 @@ def get_security_analysis():
             "normal_location": u_profile.get("home_device") or "-",
         }
         ranked_identities.append(identity_entry)
+
 
     # Sort identities by risk_score desc, then high_risk_events desc, then event_count desc
     ranked_identities.sort(key=lambda u: (u["risk_score"], u["high_risk_events"], u["event_count"]), reverse=True)

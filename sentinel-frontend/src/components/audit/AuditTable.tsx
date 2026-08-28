@@ -13,6 +13,8 @@ import {
   Search
 } from 'lucide-react';
 import { clsx } from 'clsx';
+import { formatEventType, formatContextStatus, formatSeverity, formatTimestamp } from '../../utils/formatters';
+
 
 interface AuditTableProps {
   logs: AuditEventItem[];
@@ -30,9 +32,18 @@ export const AuditTable: React.FC<AuditTableProps> = ({
   onSort
 }) => {
   const getSeverityBadgeVariant = (severity: string) => {
-    const s = severity.toUpperCase();
-    if (s === 'CRITICAL' || s === 'HIGH' || s === 'LOW') return s as any;
-    return 'MEDIUM';
+    switch (severity?.toUpperCase()) {
+      case 'CRITICAL':
+        return 'CRITICAL';
+      case 'HIGH':
+        return 'HIGH';
+      case 'MODERATE':
+      case 'MEDIUM':
+        return 'MEDIUM';
+      case 'LOW':
+      default:
+        return 'LOW';
+    }
   };
 
   const renderSortIcon = (column: 'timestamp' | 'risk_score' | 'severity' | 'event_id') => {
@@ -47,17 +58,7 @@ export const AuditTable: React.FC<AuditTableProps> = ({
   };
 
   const formatTimestampDisplay = (ts: string) => {
-    if (!ts) return 'N/A';
-    if (ts.includes('T')) {
-      const parts = ts.split('T');
-      return (
-        <div>
-          <span className="text-gray-400">{parts[0]}</span>{' '}
-          <span className="text-gray-200 font-bold">{parts[1]}</span>
-        </div>
-      );
-    }
-    return ts;
+    return formatTimestamp(ts, 'detailed');
   };
 
   return (
@@ -145,8 +146,8 @@ export const AuditTable: React.FC<AuditTableProps> = ({
                 </td>
 
                 <td className="py-3 px-3">
-                  <span className="font-sans uppercase text-[11px] font-semibold text-gray-300 bg-gray-800/80 px-2 py-0.5 rounded border border-gray-700/60">
-                    {item.event_type}
+                  <span className="font-sans text-[11px] font-semibold text-gray-200 bg-gray-850 px-2 py-0.5 rounded border border-gray-700/60 whitespace-nowrap">
+                    {formatEventType(item.event_type)}
                   </span>
                 </td>
 
@@ -169,28 +170,25 @@ export const AuditTable: React.FC<AuditTableProps> = ({
 
                 <td className="py-3 px-3">
                   <Badge variant="risk" riskLevel={getSeverityBadgeVariant(item.severity)}>
-                    {item.severity}
+                    {formatSeverity(item.severity)}
                   </Badge>
                 </td>
 
                 <td className="py-3 px-3 font-sans">
                   <span
                     className={clsx(
-                      'text-[10px] font-mono px-2 py-0.5 rounded border font-semibold',
-                      item.context?.status === 'found'
+                      'text-[10px] font-sans px-2 py-0.5 rounded border font-semibold whitespace-nowrap',
+                      item.context?.status === 'found' || item.context?.status === 'approved' || item.context?.status === 'matched'
                         ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800'
                         : item.context?.status === 'ambiguous'
                         ? 'bg-yellow-950/80 text-yellow-300 border-yellow-800'
                         : 'bg-gray-900 text-gray-400 border-gray-800'
                     )}
                   >
-                    {item.context?.status === 'found'
-                      ? 'SUPPRESSED (0.8x)'
-                      : item.context?.status === 'ambiguous'
-                      ? 'AMBIGUOUS'
-                      : 'NO CONTEXT'}
+                    {formatContextStatus(item.context?.status)}
                   </span>
                 </td>
+
 
                 <td className="py-3 px-3 font-sans">
                   {item.sequence?.chain_detected ? (

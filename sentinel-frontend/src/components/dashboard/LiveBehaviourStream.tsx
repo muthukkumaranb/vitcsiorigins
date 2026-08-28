@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { SecurityEvent } from '../../types/security';
 import { Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { formatEventType, formatSeverity, formatTimestamp } from '../../utils/formatters';
 
 interface LiveBehaviourStreamProps {
   events: SecurityEvent[];
@@ -38,31 +39,36 @@ export const LiveBehaviourStream: React.FC<LiveBehaviourStreamProps> = ({ events
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
-                onClick={() => navigate(`/investigation/${evt.user_id}`)}
+                onClick={() => navigate(`/investigation/${evt.event_id}`)}
                 className="p-3 bg-[#0b0f17]/70 border border-[#1f293d] rounded-lg hover:border-cyan-500/40 hover:bg-[#161f30] transition-all cursor-pointer flex items-center justify-between gap-3 group"
               >
                 <div className="flex items-start gap-3 min-w-0">
                   <div className="flex items-center gap-1 text-[11px] font-mono text-gray-400 shrink-0 mt-0.5">
                     <Clock className="w-3 h-3 text-gray-500" />
-                    <span>{evt.timestamp}</span>
+                    <span>{formatTimestamp(evt.timestamp, 'compact')}</span>
                   </div>
+
 
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-mono font-bold text-cyan-400 bg-cyan-950/80 px-1.5 py-0.5 rounded border border-cyan-800/60">
+                        {evt.event_id}
+                      </span>
                       <span className="text-xs font-bold text-gray-200 group-hover:text-cyan-300 transition-colors">
                         {evt.user_id}
                       </span>
                       <span className="text-[11px] font-semibold text-gray-300 truncate">
-                        {evt.event_type}
+                        {formatEventType(evt.event_type)}
                       </span>
                     </div>
                     <p className="text-[11px] text-gray-400 truncate mt-0.5">{evt.description}</p>
                   </div>
+
                 </div>
 
                 <div className="flex flex-col items-end shrink-0 gap-1">
                   <Badge variant="risk" riskLevel={evt.risk_level}>
-                    {evt.risk_level}
+                    {formatSeverity(evt.risk_level)}
                   </Badge>
                   {evt.amount && evt.amount !== '-' && (
                     <span className="text-[11px] font-mono font-bold text-cyan-400">

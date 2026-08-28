@@ -13,143 +13,373 @@ import { ResponseActionPanel } from '../components/investigation/ResponseActionP
 import { AnalystFeedbackModal } from '../components/investigation/AnalystFeedbackModal';
 import { LoadingSkeleton } from '../components/common/LoadingSkeleton';
 import { ErrorState } from '../components/common/ErrorState';
-import { ShieldAlert, ArrowLeft } from 'lucide-react';
+import { Badge } from '../components/common/Badge';
+import { ShieldAlert, ArrowLeft, Activity, Layers, FileText, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { IS_MOCK_MODE } from '../services';
 import { RiskResult } from '../types/security';
+import {
+  formatEventType,
+  formatContextStatus,
+  formatSeverity,
+  formatSequenceStep,
+  formatSignal,
+  formatTimestamp
+} from '../utils/formatters';
 
-const ProductionInvestigation: React.FC<{ risk: RiskResult; onBack: () => void }> = ({ risk, onBack }) => (
-  <div className="space-y-6">
-    <div className="flex items-center gap-3 border-b border-[#1f293d] pb-4">
-      <button onClick={onBack} className="p-2 bg-[#111827] border border-[#1f293d] rounded-lg text-gray-400" title="Back to Threat Center">
-        <ArrowLeft className="w-4 h-4" />
-      </button>
-      <div>
-        <h1 className="text-xl font-black tracking-tight text-gray-100 uppercase">INVESTIGATION — {risk.event_id}</h1>
-        <p className="text-xs text-gray-400">{risk.user_id} · Authorized access with behaviour deviation assessment</p>
-      </div>
-    </div>
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div className="p-6 bg-[#111827] border border-[#1f293d] rounded-xl">
-        <h2 className="text-sm font-bold text-gray-100 uppercase">Final Risk</h2>
-        <p className="text-4xl font-black font-mono text-red-400 mt-3">{risk.risk_score} <span className="text-sm text-gray-500">/ 100</span></p>
-        <p className="text-xs font-bold text-red-300 mt-2">{risk.severity}</p>
-        <div className="mt-5 text-xs text-gray-300 space-y-2">
-          <p>Behaviour score: <strong>{risk.behaviour_score}</strong></p>
-          <p>Sequence score: <strong>{risk.sequence_score}</strong></p>
-          <p>Context multiplier: <strong>{risk.context_multiplier}</strong></p>
-        </div>
-      </div>
-      <div className="p-6 bg-[#111827] border border-[#1f293d] rounded-xl">
-        <h2 className="text-sm font-bold text-gray-100 uppercase">Behaviour Signals</h2>
-        <ul className="mt-3 space-y-2 text-sm text-gray-300">{risk.signals.length ? risk.signals.map((signal) => <li key={signal.signal}>{signal.signal}: {signal.description} (+{signal.contribution})</li>) : <li>None</li>}</ul>
-        <h2 className="text-sm font-bold text-gray-100 uppercase mt-6">Sequence</h2>
-        <p className="text-xs text-gray-300 mt-2">Chain detected: {risk.sequence.chain_detected ? 'Yes' : 'No'}</p>
-        <p className="text-xs text-gray-300 mt-2">{risk.sequence.matched_steps.length ? risk.sequence.matched_steps.map((step) => step.step).join(' → ') : 'No matched steps'}</p>
-      </div>
-    </div>
-    <div className="p-6 bg-[#111827] border border-[#1f293d] rounded-xl">
-      <h2 className="text-sm font-bold text-gray-100 uppercase">Context</h2>
-      <p className="text-sm text-gray-300 mt-3">{risk.context.status === 'matched' ? 'Approved context found; context reduced assessed risk.' : risk.context.status === 'none' ? 'No matching context.' : 'Context is ambiguous and was not applied.'}</p>
-      {risk.context.info && <p className="text-xs text-gray-400 mt-2">{risk.context.info.type} · approval: {risk.context.info.manager_approval ? 'yes' : 'no'}</p>}
-    </div>
-    <div className="p-6 bg-[#111827] border border-[#1f293d] rounded-xl">
-      <h2 className="text-sm font-bold text-gray-100 uppercase">Explainable Risk Breakdown</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">{Object.entries(risk.risk_breakdown).map(([name, score]) => <div key={name} className="text-xs text-gray-300"><span className="block text-gray-500">{name}</span><strong>{score}</strong></div>)}</div>
-    </div>
-  </div>
-);
 
-export const Investigation: React.FC = () => {
-  const { userId } = useParams<{ userId: string }>();
-  const navigate = useNavigate();
 
-  const targetUserId = userId || '';
-  const { identity, risk, baseline, peer, sequence, context, graph, isLoading, isError } =
-    useInvestigationData(targetUserId);
 
-  if (isLoading) return <LoadingSkeleton rows={10} />;
-  if (!IS_MOCK_MODE && risk && 'event_id' in risk) {
-    return <ProductionInvestigation risk={risk} onBack={() => navigate('/threats')} />;
-  }
-  if (!risk || !('risk_level' in risk)) {
-    return <ErrorState message={`No investigation result was returned for ${targetUserId || 'this event'}.`} />;
-  }
-  if (isError || !identity || !risk || !baseline || !peer || !sequence || !context || !graph) {
-    return <ErrorState message={`Failed to load investigation telemetry for ${targetUserId}.`} />;
-  }
+const ProductionInvestigation: React.FC<{ risk: RiskResult; onBack: () => void }> = ({ risk, onBack }) => {
+  const event = risk.event || {};
+  const isHighOrCritical = risk.severity === 'HIGH' || risk.severity === 'CRITICAL';
 
   return (
     <div className="space-y-6">
-      {/* Top Navigation Bar */}
+      {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#1f293d] pb-4">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate('/threats')}
+            onClick={onBack}
             className="p-2 bg-[#111827] border border-[#1f293d] rounded-lg text-gray-400 hover:text-gray-100 hover:border-gray-600 transition-colors cursor-pointer"
-            title="Back to Threat Center"
+            title="Back"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
-
           <div>
-            <h1 className="text-xl font-black tracking-tight text-gray-100 uppercase flex items-center gap-2 font-mono">
-              <ShieldAlert className="w-6 h-6 text-red-400" />
-              INVESTIGATION WORKSPACE — {identity.user_id}
-            </h1>
-            <p className="text-xs text-gray-400">
-              Deep forensic correlation & threat assessment console ({identity.role} - {identity.department})
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-black tracking-tight text-gray-100 uppercase font-mono">
+                INVESTIGATION — {risk.event_id}
+              </h1>
+              <Badge variant="risk" riskLevel={risk.severity === 'MODERATE' ? 'MEDIUM' : (risk.severity as any)}>
+                {formatSeverity(risk.severity)}
+              </Badge>
+            </div>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Subject User: <span className="font-mono font-bold text-cyan-400">{risk.user_id}</span> · Authorized access with behaviour deviation assessment
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="px-3 py-1 bg-red-950/80 border border-red-800 text-red-400 font-mono font-bold text-xs rounded-lg">
-            CRITICAL INCIDENT #{identity.user_id}
+          <span className="px-3 py-1 bg-[#111827] border border-[#1f293d] text-gray-300 font-mono text-xs rounded-lg">
+            EVENT: <strong className="text-cyan-400">{risk.event_id}</strong>
+          </span>
+          <span className="px-3 py-1 bg-[#111827] border border-[#1f293d] text-gray-300 font-mono text-xs rounded-lg">
+            ACTOR: <strong className="text-amber-400">{risk.user_id}</strong>
           </span>
         </div>
       </div>
 
-      {/* USP 1 Banner: Authorized Access vs Authorized Behaviour */}
-      <AuthVsBehaviourBanner />
-
-      {/* Hero Grid: Context Panel (Sec 16) + Explainable Risk Breakdown (Sec 17 / USP 6) */}
+      {/* Main Score & Engine Highlights */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-5">
-          <ContextPanel identity={identity} />
+        {/* Left: Final Risk Score Card */}
+        <div className="lg:col-span-5 p-6 bg-[#111827] border border-[#1f293d] rounded-xl flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Assessed Risk Score</h2>
+              <Badge variant="risk" riskLevel={risk.severity}>
+                {formatSeverity(risk.severity)}
+              </Badge>
+            </div>
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className={`text-5xl font-black font-mono ${isHighOrCritical ? 'text-red-400' : 'text-emerald-400'}`}>
+                {risk.risk_score}
+              </span>
+              <span className="text-sm text-gray-500 font-mono">/ 100</span>
+            </div>
+            <p className={`text-xs font-bold uppercase mt-1 ${isHighOrCritical ? 'text-red-300' : 'text-emerald-300'}`}>
+              {formatSeverity(risk.severity)} SEVERITY LEVEL
+            </p>
+          </div>
+
+          <div className="mt-6 pt-6 border-t border-[#1f293d] space-y-2.5 text-xs font-mono">
+            <div className="flex justify-between items-center text-gray-400">
+              <span className="font-sans">Behavioural Anomaly Score:</span>
+              <strong className="text-gray-200">{risk.behaviour_score}</strong>
+            </div>
+            <div className="flex justify-between items-center text-gray-400">
+              <span className="font-sans">Multi-Step Sequence Score:</span>
+              <strong className="text-gray-200">{risk.sequence_score}</strong>
+            </div>
+            <div className="flex justify-between items-center text-gray-400">
+              <span className="font-sans">Context Suppression Multiplier:</span>
+              <strong className="text-cyan-400">{risk.context_multiplier}x</strong>
+            </div>
+          </div>
+
+          <div className="mt-6 pt-4 border-t border-[#1f293d] text-[11px] font-mono text-gray-500">
+            Formula: clamp((behaviour * 0.6 + sequence * 0.4) * context, 0, 100)
+          </div>
         </div>
-        <div className="lg:col-span-7">
-          <RiskScoreBreakdown risk={risk} />
+
+
+        {/* Right: Telemetry & Event Details Card */}
+        <div className="lg:col-span-7 p-6 bg-[#111827] border border-[#1f293d] rounded-xl">
+          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 mb-4">
+            <FileText className="w-4 h-4 text-cyan-400" />
+            Security Event Telemetry Details
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs">
+            <div>
+              <span className="text-gray-500 block text-[10px]">EVENT ID</span>
+              <span className="font-mono font-bold text-gray-200">{risk.event_id}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 block text-[10px]">USER ID</span>
+              <span className="font-mono font-bold text-gray-200">{risk.user_id}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 block text-[10px]">EVENT TYPE</span>
+              <span className="font-sans font-bold text-gray-200">{formatEventType(event.event_type)}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 block text-[10px]">TIMESTAMP</span>
+              <span className="font-mono text-gray-300">{formatTimestamp(event.timestamp, 'detailed')}</span>
+            </div>
+            {event.resource_id && (
+              <div>
+                <span className="text-gray-500 block text-[10px]">RESOURCE ID</span>
+                <span className="font-mono text-gray-300">{event.resource_id}</span>
+              </div>
+            )}
+            {(event.device_id || event.ip_address) && (
+              <div>
+                <span className="text-gray-500 block text-[10px]">DEVICE / IP</span>
+                <span className="font-mono text-gray-300">{event.device_id || event.ip_address}</span>
+              </div>
+            )}
+          </div>
+
+          {event.transaction_amount && Number(event.transaction_amount) > 0 && (
+            <div className="mt-4 p-3 bg-[#0b0f17] border border-[#1f293d] rounded-lg flex items-center justify-between text-xs font-mono">
+              <span className="text-gray-400">Transaction Amount:</span>
+              <span className="font-bold text-cyan-400">₹{Number(event.transaction_amount).toLocaleString()}</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Response Action Panel: Graduated Response (Sec 23 / USP 7) */}
-      <ResponseActionPanel
-        userId={identity.user_id}
-        recommendedAction={risk.recommended_action}
-        riskLevel={risk.risk_level}
-      />
-
-      {/* Sequence Intelligence Timeline (Sec 20 / USP 3) */}
-      <BehaviourSequenceTimeline sequence={sequence} />
-
-      {/* Baseline (Sec 18 / USP 2) & Peer Comparison (Sec 19 / USP 4) */}
+      {/* Signals & Sequence Intelligence */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <BaselineComparison metrics={baseline} />
-        <PeerAnalysis peerMetrics={peer} peerGroup={identity.peer_group} />
+        {/* Behaviour Signals */}
+        <div className="p-6 bg-[#111827] border border-[#1f293d] rounded-xl">
+          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 mb-3">
+            <Activity className="w-4 h-4 text-amber-400" />
+            Detected Behaviour Signals
+          </h2>
+          {risk.signals && risk.signals.length > 0 ? (
+            <ul className="space-y-2.5">
+              {risk.signals.map((s, idx) => (
+                <li key={idx} className="p-3 bg-[#0b0f17] border border-[#1f293d] rounded-lg text-xs flex items-start justify-between gap-3">
+                  <div>
+                    <span className="font-sans font-bold text-amber-400 block">{formatSignal(s.signal)}</span>
+                    <span className="text-gray-300 text-[11px] mt-0.5 block">{s.description}</span>
+                  </div>
+                  <span className="font-mono font-bold text-red-400 shrink-0 bg-red-950/60 px-2 py-0.5 rounded border border-red-800/40 text-[10px]">
+                    +{s.contribution}
+                  </span>
+                </li>
+
+              ))}
+            </ul>
+          ) : (
+            <div className="py-8 text-center text-xs text-gray-500 bg-[#0b0f17] rounded-lg border border-[#1f293d]">
+              No anomalous behavioural deviation signals triggered for this event.
+            </div>
+          )}
+        </div>
+
+        {/* Sequence Chain */}
+        <div className="p-6 bg-[#111827] border border-[#1f293d] rounded-xl">
+          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 mb-3">
+            <Layers className="w-4 h-4 text-purple-400" />
+            Sequence & Multi-Step Attack Correlation
+          </h2>
+          <div className="space-y-3">
+            <div className="p-3 bg-[#0b0f17] border border-[#1f293d] rounded-lg flex items-center justify-between text-xs">
+              <span className="text-gray-400">Attack Chain Detected:</span>
+              <span className={`font-bold font-mono px-2 py-0.5 rounded ${risk.sequence.chain_detected ? 'text-red-400 bg-red-950/60 border border-red-800/40' : 'text-emerald-400 bg-emerald-950/60 border border-emerald-800/40'}`}>
+                {risk.sequence.chain_detected ? 'YES — CHAIN MATCHED' : 'NO CHAIN'}
+              </span>
+            </div>
+
+            {risk.sequence.matched_steps && risk.sequence.matched_steps.length > 0 ? (
+              <div className="p-3 bg-[#0b0f17] border border-[#1f293d] rounded-lg">
+                <span className="text-[10px] text-gray-500 block uppercase font-mono mb-2">Matched Sequence Progression</span>
+                <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+                  {risk.sequence.matched_steps.map((step, idx) => (
+                    <React.Fragment key={idx}>
+                      <span className="px-2 py-1 bg-purple-950/80 text-purple-300 rounded border border-purple-800/50 font-sans font-semibold">
+                        {formatSequenceStep(step.step)}
+                      </span>
+                      {idx < risk.sequence.matched_steps.length - 1 && (
+                        <span className="text-gray-500">→</span>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="p-3 bg-[#0b0f17] border border-[#1f293d] rounded-lg text-xs text-gray-500">
+                No multi-step sequence progression matched in lookback window.
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Contextual Assessment (Sec 21 / USP 5) & Continuous Learning Feedback (Sec 24 / USP 8) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-7">
-          <ContextAssessmentCard context={context} />
-        </div>
-        <div className="lg:col-span-5">
-          <AnalystFeedbackModal userId={identity.user_id} />
+      {/* Context Assessment */}
+      <div className="p-6 bg-[#111827] border border-[#1f293d] rounded-xl">
+        <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 mb-3">
+          {risk.context.status === 'matched' ? (
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          ) : (
+            <AlertTriangle className="w-4 h-4 text-gray-400" />
+          )}
+          Authorizing Operational Context
+        </h2>
+        <div className="p-4 bg-[#0b0f17] border border-[#1f293d] rounded-lg text-xs space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-gray-400 font-medium">Context Match Status:</span>
+            <span className="font-sans font-bold text-cyan-400">{formatContextStatus(risk.context.status)}</span>
+          </div>
+          <p className="text-gray-300">
+            {risk.context.status === 'matched'
+              ? 'Approved business window context was matched, suppressing baseline deviation severity.'
+              : risk.context.status === 'none'
+              ? 'No authorizing operational ticket or maintenance window was active at event timestamp.'
+              : 'Context assessment evaluated with standard multiplier.'}
+
+          </p>
+          {risk.context.info && (
+            <div className="mt-2 pt-2 border-t border-[#1f293d] flex gap-4 text-[11px] text-gray-400 font-mono">
+              <span>Type: <strong className="text-gray-200">{risk.context.info.type}</strong></span>
+              <span>Approved: <strong className="text-gray-200">{risk.context.info.manager_approval ? 'YES' : 'NO'}</strong></span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Interactive Entity Relationship Topology Graph (Sec 22) */}
-      <RelationshipGraph data={graph} />
     </div>
+  );
+};
+
+export const Investigation: React.FC = () => {
+  const { eventId, userId } = useParams<{ eventId?: string; userId?: string }>();
+  const navigate = useNavigate();
+
+  const targetId = eventId || userId || '';
+  const { identity, risk, baseline, peer, sequence, context, graph, isLoading, isError, error } =
+    useInvestigationData(targetId);
+
+  if (isLoading) return <LoadingSkeleton rows={10} />;
+
+  if (isError) {
+    const errorMsg = error instanceof Error ? error.message : String(error || '');
+    const isNotFound = errorMsg.includes('404') || errorMsg.toLowerCase().includes('not found');
+    return (
+      <ErrorState
+        title={isNotFound ? 'Event Not Found' : 'Unable to Retrieve Telemetry'}
+        message={
+          isNotFound
+            ? `Security event '${targetId}' was not found in the runtime log records.`
+            : `Unable to retrieve investigation data for ${targetId}.`
+        }
+        onRetry={() => navigate('/dashboard')}
+        retryText="Back to Security Posture"
+      />
+    );
+  }
+
+  // Production mode: event risk result loaded from Flask API
+  if (!IS_MOCK_MODE && risk && 'event_id' in risk) {
+    return <ProductionInvestigation risk={risk} onBack={() => navigate(-1)} />;
+  }
+
+  // Mock mode: multi-panel investigation workspace
+  if (risk && 'risk_level' in risk && identity) {
+    return (
+      <div className="space-y-6">
+        {/* Top Navigation Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#1f293d] pb-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/threats')}
+              className="p-2 bg-[#111827] border border-[#1f293d] rounded-lg text-gray-400 hover:text-gray-100 hover:border-gray-600 transition-colors cursor-pointer"
+              title="Back to Threat Center"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+
+            <div>
+              <h1 className="text-xl font-black tracking-tight text-gray-100 uppercase flex items-center gap-2 font-mono">
+                <ShieldAlert className="w-6 h-6 text-red-400" />
+                INVESTIGATION WORKSPACE — {identity.user_id}
+              </h1>
+              <p className="text-xs text-gray-400">
+                Deep forensic correlation & threat assessment console ({identity.role} - {identity.department})
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1 bg-red-950/80 border border-red-800 text-red-400 font-mono font-bold text-xs rounded-lg">
+              CRITICAL INCIDENT #{identity.user_id}
+            </span>
+          </div>
+        </div>
+
+        {/* USP 1 Banner: Authorized Access vs Authorized Behaviour */}
+        <AuthVsBehaviourBanner />
+
+        {/* Hero Grid: Context Panel + Explainable Risk Breakdown */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-5">
+            <ContextPanel identity={identity} />
+          </div>
+          <div className="lg:col-span-7">
+            <RiskScoreBreakdown risk={risk} />
+          </div>
+        </div>
+
+        {/* Response Action Panel */}
+        <ResponseActionPanel
+          userId={identity.user_id}
+          recommendedAction={risk.recommended_action}
+          riskLevel={risk.risk_level}
+        />
+
+        {/* Sequence Intelligence Timeline */}
+        {sequence && <BehaviourSequenceTimeline sequence={sequence} />}
+
+        {/* Baseline & Peer Comparison */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {baseline && <BaselineComparison metrics={baseline} />}
+          {peer && <PeerAnalysis peerMetrics={peer} peerGroup={identity.peer_group} />}
+        </div>
+
+        {/* Contextual Assessment & Feedback */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-7">
+            {context && <ContextAssessmentCard context={context} />}
+          </div>
+          <div className="lg:col-span-5">
+            <AnalystFeedbackModal userId={identity.user_id} />
+          </div>
+        </div>
+
+        {/* Entity Relationship Topology Graph */}
+        {graph && <RelationshipGraph data={graph} />}
+      </div>
+    );
+  }
+
+  return (
+    <ErrorState
+      title="Investigation Data Unavailable"
+      message={`No investigation telemetry records were found for ${targetId || 'this event'}.`}
+      onRetry={() => navigate('/dashboard')}
+      retryText="Back to Security Posture"
+    />
   );
 };

@@ -3,23 +3,27 @@ import { Card } from '../common/Card';
 import { Identity } from '../../types/security';
 import { Badge } from '../common/Badge';
 import { User, Shield, Clock, MapPin, Users, Building } from 'lucide-react';
+import { formatIdentityStatus } from '../../utils/formatters';
 
 interface ContextPanelProps {
   identity: Identity;
 }
 
 export const ContextPanel: React.FC<ContextPanelProps> = ({ identity }) => {
-  const fields = [
+  const allFields = [
     { label: 'Identity ID', value: identity.user_id, icon: User, isMono: true },
-    { label: 'Full Name', value: identity.name, icon: User },
+    { label: 'Full Name', value: identity.name && identity.name !== identity.user_id ? identity.name : null, icon: User },
     { label: 'Role', value: identity.role, icon: Shield },
     { label: 'Department', value: identity.department, icon: Building },
     { label: 'Account Type', value: identity.account_type, isBadge: 'account' },
     { label: 'Privilege Level', value: identity.privilege_level, isBadge: 'privilege' },
     { label: 'Peer Group', value: identity.peer_group, icon: Users },
-    { label: 'Normal Hours', value: identity.normal_hours || '09:00 - 18:00 IST', icon: Clock },
-    { label: 'Normal Location', value: identity.normal_location || 'Mumbai HQ', icon: MapPin }
+    { label: 'Normal Hours', value: identity.normal_hours, icon: Clock },
+    { label: 'Normal Location', value: identity.normal_location, icon: MapPin }
   ];
+
+  const fields = allFields.filter((f) => f.value !== undefined && f.value !== null && f.value !== '' && f.value !== '-');
+
 
   return (
     <Card className="h-full">
@@ -29,9 +33,10 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({ identity }) => {
           Identity Context Profile
         </h3>
         <Badge variant="risk" riskLevel={identity.status === 'CRITICAL' ? 'CRITICAL' : 'HIGH'}>
-          {identity.status}
+          {formatIdentityStatus(identity.status)}
         </Badge>
       </div>
+
 
       <div className="space-y-3 text-xs">
         {fields.map((f, i) => (

@@ -1,5 +1,5 @@
-  import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000'
 import React, { useState } from 'react';
+
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { IS_MOCK_MODE } from '../services';
