@@ -1,0 +1,2 @@
+total_events,actual_attacks,predicted_attacks,true_negatives,false_positives,false_negatives,true_positives,accuracy,precision,recall,f1_score,attack_detection_rate
+736,10,10,726,0,0,10,1.0,1.0,1.0,1.0,100.0
