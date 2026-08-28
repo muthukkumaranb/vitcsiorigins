@@ -3,6 +3,7 @@ import { Card } from '../common/Card';
 import { Button } from '../common/Button';
 import { Modal } from '../common/Modal';
 import { useResponseActionMutation } from '../../hooks/useSecurityData';
+import { useAuth } from '../../context/AuthContext';
 import { ShieldAlert, CheckCircle2, AlertOctagon, Lock, Eye, Send } from 'lucide-react';
 
 interface ResponseActionPanelProps {
@@ -16,6 +17,9 @@ export const ResponseActionPanel: React.FC<ResponseActionPanelProps> = ({
   recommendedAction,
   riskLevel
 }) => {
+  const { canPerformAction } = useAuth();
+  const canRespond = canPerformAction('respond');
+
   const [activeModalAction, setActiveModalAction] = useState<
     'MONITOR' | 'VERIFY' | 'RESTRICT' | 'SUSPEND' | 'ESCALATE' | null
   >(null);
@@ -77,25 +81,32 @@ export const ResponseActionPanel: React.FC<ResponseActionPanelProps> = ({
 
         {/* Action Button Suite */}
         <div className="flex flex-wrap items-center gap-2">
-          {actionButtons.map((btn) => {
-            const Icon = btn.icon;
-            const isRecommended = recommendedAction.includes(btn.type);
+          {!canRespond ? (
+            <div className="text-[11px] text-amber-400/90 bg-amber-950/40 border border-amber-800/50 px-3 py-1.5 rounded-lg font-medium">
+              Response execution restricted to Analyst &amp; Admin roles (RBAC)
+            </div>
+          ) : (
+            actionButtons.map((btn) => {
+              const Icon = btn.icon;
+              const isRecommended = recommendedAction.includes(btn.type);
 
-            return (
-              <Button
-                key={btn.type}
-                variant={btn.variant}
-                size="sm"
-                icon={<Icon className="w-3.5 h-3.5" />}
-                onClick={() => setActiveModalAction(btn.type)}
-                className={isRecommended ? 'ring-2 ring-red-400 ring-offset-2 ring-offset-[#0b0f17] scale-105' : ''}
-              >
-                {btn.label}
-              </Button>
-            );
-          })}
+              return (
+                <Button
+                  key={btn.type}
+                  variant={btn.variant}
+                  size="sm"
+                  icon={<Icon className="w-3.5 h-3.5" />}
+                  onClick={() => setActiveModalAction(btn.type)}
+                  className={isRecommended ? 'ring-2 ring-red-400 ring-offset-2 ring-offset-[#0b0f17] scale-105' : ''}
+                >
+                  {btn.label}
+                </Button>
+              );
+            })
+          )}
         </div>
       </div>
+
 
       {/* Confirmation Modal */}
       <Modal

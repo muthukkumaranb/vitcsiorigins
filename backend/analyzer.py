@@ -15,10 +15,27 @@ from .processor import process_event
 
 
 
+import threading
+
+_SCORED_CACHE = None
+_SCORED_CACHE_KEY = None
+_SCORED_CACHE_LOCK = threading.Lock()
+
+
 def get_all_scored_events():
-    """Evaluate and return scored event records sorted chronologically."""
+    """Evaluate and return scored event records sorted chronologically with thread-safe caching."""
+    global _SCORED_CACHE, _SCORED_CACHE_KEY
+
+    event_ids = store.get_all_event_ids()
+    current_key = (len(store.events_by_id), len(getattr(store, '_live_event_ids', [])), event_ids[-1] if event_ids else None)
+
+
+    with _SCORED_CACHE_LOCK:
+        if _SCORED_CACHE is not None and _SCORED_CACHE_KEY == current_key:
+            return list(_SCORED_CACHE)
+
     scored = []
-    for event_id in store.get_all_event_ids():
+    for event_id in event_ids:
         try:
             result = process_event(event_id)
             scored.append(result)
@@ -27,7 +44,12 @@ def get_all_scored_events():
 
     # Sort chronologically by timestamp
     scored.sort(key=lambda item: item["event"].get("timestamp") or "")
-    return scored
+
+    with _SCORED_CACHE_LOCK:
+        _SCORED_CACHE = scored
+        _SCORED_CACHE_KEY = current_key
+        return list(_SCORED_CACHE)
+
 
 
 
