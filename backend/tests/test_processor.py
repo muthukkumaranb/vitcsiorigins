@@ -1,11 +1,7 @@
-import os
-import sys
+from backend.app import app
+from backend.data_loader import store
+from backend.processor import calculate_behaviour, calculate_sequence, get_context, get_event, process_event, EventNotFoundError, classify_severity
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from app import app
-from data_loader import store
-from processor import calculate_behaviour, calculate_sequence, get_context, get_event, process_event, EventNotFoundError
 
 
 def test_normal_event_is_low():
@@ -83,8 +79,8 @@ def test_required_response_fields_are_deterministic():
 
 
 def test_severity_boundaries():
-    from processor import classify_severity
     assert classify_severity(24) == "LOW"
+
     assert classify_severity(25) == "MODERATE"
     assert classify_severity(49) == "MODERATE"
     assert classify_severity(50) == "HIGH"

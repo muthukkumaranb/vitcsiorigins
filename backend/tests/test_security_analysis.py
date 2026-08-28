@@ -1,12 +1,8 @@
-import os
-import sys
+from backend.app import app
+from backend.data_loader import store
+from backend.analyzer import get_security_analysis, get_analytics_data
+from backend.processor import process_event
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from app import app
-from data_loader import store
-from analyzer import get_security_analysis, get_analytics_data
-from processor import process_event
 
 
 def test_security_analysis_endpoint_returns_200_and_expected_schema():

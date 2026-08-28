@@ -1,11 +1,7 @@
-import os
-import sys
+from backend.app import app
+from backend.data_loader import store
+from backend.processor import process_event
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from app import app
-from data_loader import store
-from processor import process_event
 
 
 def test_audit_endpoint_returns_200_and_expected_schema():
