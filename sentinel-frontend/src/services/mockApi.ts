@@ -16,8 +16,11 @@ import {
   AuditLogResponse,
   AuditQueryParams,
   ResponseActionPayload,
-  AnalystFeedback
+  AnalystFeedback,
+  MLStatus,
+  SecurityIncident
 } from '../types/security';
+
 
 
 import {
@@ -114,8 +117,46 @@ export const mockApiService = {
             { step: mockEvent.event_type, event_id: mockEvent.event_id, timestamp: mockEvent.timestamp, matched: true }
           ]
         },
-        context: { status: 'none', info: null }
+        context: { status: 'none', info: null },
+        ml_assessment: {
+          status: 'active',
+          attack_probability: isCritical ? 0.92 : isHigh ? 0.68 : 0.12,
+          prediction: isCritical || isHigh ? 1 : 0,
+          severity: mockEvent.risk_level as any,
+          confidence: 0.88,
+          model_name: 'RandomForestClassifier',
+          model_version: '1.0.0',
+          features: {
+            login_deviation_score: isHigh ? 0.75 : 0.1,
+            after_hours_flag: isHigh ? 1.0 : 0.0,
+            new_device_flag: 0.0,
+            sensitive_access_flag: isCritical ? 1.0 : 0.0,
+            records_accessed_score: isCritical ? 0.8 : 0.0,
+            permission_change_flag: 0.0,
+            new_beneficiary_flag: 0.0,
+            transaction_amount_score: isCritical ? 0.9 : 0.0,
+            transaction_frequency_score: 0.0,
+            sequence_matched_ratio: isCritical ? 0.67 : 0.17
+          },
+          contributing_features: [
+            { feature: 'sensitive_access_flag', value: isCritical ? 1.0 : 0.0, importance: 0.95 },
+            { feature: 'transaction_amount_score', value: isCritical ? 0.9 : 0.0, importance: 0.90 },
+            { feature: 'login_deviation_score', value: isHigh ? 0.75 : 0.1, importance: 0.75 }
+          ]
+        },
+        hybrid_risk: {
+          hybrid_score: score,
+          fusion_mode: 'hybrid_fusion_v1',
+          weights: { behaviour: 0.45, sequence: 0.30, ml: 0.25 },
+          formula: 'clamp((behaviour * 0.45 + sequence * 0.30 + (ml_probability * 100) * 0.25) * context, 0, 100)'
+        },
+        explainability_factors: [
+          `Behavioural Deviation: ${mockEvent.description}`,
+          isCritical || isHigh ? 'Multi-Stage Attack Chain: Sequence correlation detected in 60-min window.' : 'Baseline Normal Activity',
+          `ML Classifier: Model estimates ${isCritical ? '92%' : isHigh ? '68%' : '12%'} malicious probability.`
+        ]
       };
+
 
     }
     const identity = currentIdentities.find((i) => i.user_id.toUpperCase() === id.toUpperCase());
@@ -376,6 +417,253 @@ export const mockApiService = {
     return {
       success: true,
       message: 'Analyst feedback successfully recorded. Model continuous baseline updated.'
+    };
+  },
+
+  getMLStatus: async (): Promise<MLStatus> => {
+    await delay(150);
+    return {
+      available: true,
+      status: 'loaded',
+      model_name: 'RandomForestClassifier',
+      model_version: '1.0.0',
+      trained_at: '2026-03-02T00:00:00Z',
+      features: [
+        'login_deviation_score',
+        'after_hours_flag',
+        'new_device_flag',
+        'sensitive_access_flag',
+        'records_accessed_score',
+        'permission_change_flag',
+        'new_beneficiary_flag',
+        'transaction_amount_score',
+        'transaction_frequency_score',
+        'sequence_matched_ratio'
+      ],
+      training_metadata: {
+        accuracy: 1.0,
+        f1_score: 1.0,
+        split_method: 'stratified_60_20_20'
+      }
+    };
+  },
+
+  getIncidents: async (): Promise<SecurityIncident[]> => {
+    await delay(200);
+    return [
+      {
+        incident_id: 'INC-001',
+        user_id: 'U001',
+        title: 'Privileged Account Takeover & Multi-Stage Exfiltration',
+        start_time: '2026-03-02T02:11:04',
+        end_time: '2026-03-02T02:22:15',
+        event_count: 6,
+        max_risk_score: 88.0,
+        severity: 'CRITICAL',
+        investigation_priority: 'P1 — Immediate',
+        status: 'OPEN',
+        stages: [
+          {
+            stage_id: 'STAGE_1',
+            name: 'Ingress & Credential Usage',
+            events: [
+              { event_id: 'E000408', timestamp: '2026-03-02T02:11:04', event_type: 'login', risk_score: 55.0, severity: 'HIGH' }
+            ]
+          },
+          {
+            stage_id: 'STAGE_2',
+            name: 'Privilege Escalation',
+            events: [
+              { event_id: 'E000410', timestamp: '2026-03-02T02:14:12', event_type: 'permission_change', risk_score: 72.0, severity: 'HIGH' }
+            ]
+          },
+          {
+            stage_id: 'STAGE_3',
+            name: 'Discovery & Sensitive Access',
+            events: [
+              { event_id: 'E000412', timestamp: '2026-03-02T02:17:45', event_type: 'file_access', risk_score: 6.67, severity: 'LOW' }
+            ]
+          },
+          {
+            stage_id: 'STAGE_4',
+            name: 'Exfiltration & Financial Impact',
+            events: [
+              { event_id: 'E000418', timestamp: '2026-03-02T02:22:15', event_type: 'data_export', risk_score: 88.0, severity: 'CRITICAL' }
+            ]
+          }
+        ],
+        events: ['E000408', 'E000410', 'E000412', 'E000418'],
+        primary_indicators: ['UNUSUAL_LOGIN', 'PRIVILEGE_CHANGE', 'SENSITIVE_ACCESS', 'DATA_EXPORT'],
+        top_event_id: 'E000418'
+      }
+    ];
+  },
+
+  getIncident: async (incidentId: string): Promise<SecurityIncident> => {
+    await delay(150);
+    const list = await mockApiService.getIncidents();
+    const found = list.find((i) => i.incident_id.toLowerCase() === incidentId.toLowerCase());
+    if (found) return found;
+    return list[0];
+  },
+
+  getSimulationStatus: async () => {
+    await delay(100);
+    return {
+      state: 'stopped' as const,
+      enabled: false,
+      mode: 'mixed',
+      interval_ms: 2000,
+      events_generated: 412,
+      alerts_triggered: 18,
+      last_event_id: 'SIM-000412',
+      last_event_timestamp: new Date().toISOString(),
+      available_modes: ['mixed', 'normal_activity', 'privilege_abuse', 'account_takeover', 'data_exfiltration'],
+      total_stored_events: 412
+    };
+  },
+
+  startSimulation: async (mode = 'mixed', interval_ms = 2000) => {
+    await delay(100);
+    return {
+      state: 'running' as const,
+      enabled: true,
+      mode,
+      interval_ms,
+      events_generated: 413,
+      alerts_triggered: 18,
+      last_event_id: 'SIM-000413',
+      last_event_timestamp: new Date().toISOString(),
+      available_modes: ['mixed', 'normal_activity', 'privilege_abuse', 'account_takeover', 'data_exfiltration'],
+      total_stored_events: 413
+    };
+  },
+
+  pauseSimulation: async () => {
+    await delay(100);
+    return {
+      state: 'paused' as const,
+      enabled: false,
+      mode: 'mixed',
+      interval_ms: 2000,
+      events_generated: 413,
+      alerts_triggered: 18,
+      last_event_id: 'SIM-000413',
+      last_event_timestamp: new Date().toISOString(),
+      available_modes: ['mixed', 'normal_activity', 'privilege_abuse', 'account_takeover', 'data_exfiltration'],
+      total_stored_events: 413
+    };
+  },
+
+  stopSimulation: async () => {
+    await delay(100);
+    return {
+      state: 'stopped' as const,
+      enabled: false,
+      mode: 'mixed',
+      interval_ms: 2000,
+      events_generated: 413,
+      alerts_triggered: 18,
+      last_event_id: 'SIM-000413',
+      last_event_timestamp: new Date().toISOString(),
+      available_modes: ['mixed', 'normal_activity', 'privilege_abuse', 'account_takeover', 'data_exfiltration'],
+      total_stored_events: 413
+    };
+  },
+
+  resetSimulation: async () => {
+    await delay(100);
+    return {
+      state: 'stopped' as const,
+      enabled: false,
+      mode: 'mixed',
+      interval_ms: 2000,
+      events_generated: 0,
+      alerts_triggered: 0,
+      last_event_id: null,
+      last_event_timestamp: null,
+      available_modes: ['mixed', 'normal_activity', 'privilege_abuse', 'account_takeover', 'data_exfiltration'],
+      total_stored_events: 412
+    };
+  },
+
+  stepSimulation: async (_mode = 'mixed') => {
+    await delay(100);
+    return {
+      success: true,
+      event_id: 'SIM-000414',
+      is_alert: false,
+      assessment: {
+        event_id: 'SIM-000414',
+        user_id: 'U001',
+        risk_score: 18.5,
+        severity: 'LOW'
+      }
+    };
+  },
+
+  getMLRegistry: async () => {
+    await delay(150);
+    return {
+      active_version: 'v1.0.0',
+      previous_version: null,
+      versions: {
+        'v1.0.0': {
+          version: 'v1.0.0',
+          model_name: 'RandomForestClassifier',
+          status: 'active' as const,
+          registered_at: '2026-08-28T00:00:00Z',
+          description: 'Production certified baseline model trained on stratified attack scenarios.',
+          metrics: {
+            accuracy: 1.0,
+            precision: 1.0,
+            recall: 1.0,
+            f1_score: 1.0,
+            false_positive_rate: 0.0,
+            false_negative_rate: 0.0,
+            roc_auc: 1.0
+          }
+        }
+      }
+    };
+  },
+
+  trainCandidateModel: async (version?: string, _description?: string) => {
+
+    await delay(300);
+    const ver = version || 'v1.1.0-candidate';
+    return {
+      success: true,
+      version: ver,
+      metrics: {
+        accuracy: 0.99,
+        precision: 0.98,
+        recall: 0.97,
+        f1_score: 0.975,
+        false_positive_rate: 0.01,
+        false_negative_rate: 0.03
+      },
+      can_promote: true,
+      gate_reason: 'All security validation criteria passed.'
+    };
+  },
+
+  promoteModel: async (version: string) => {
+    await delay(200);
+    return {
+      success: true,
+      message: `Model ${version} successfully promoted to active.`,
+      active_version: version,
+      previous_version: 'v1.0.0'
+    };
+  },
+
+  rollbackModel: async () => {
+    await delay(200);
+    return {
+      success: true,
+      message: 'Successfully rolled back to v1.0.0.',
+      active_version: 'v1.0.0'
     };
   }
 };

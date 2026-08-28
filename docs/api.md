@@ -16,13 +16,74 @@ Returns identity records derived from `output/users.csv`.
 
 ## `GET /api/events/{event_id}/risk/`
 
-Returns the public event, user ID, behavior score/signals, sequence score/matched steps, context status/info/multiplier, bounded risk score, and severity.
+Returns the comprehensive multi-layered risk assessment for a specific event:
+- Deterministic behavior score, signals, and sequence matched steps.
+- Authorizing operational context and multiplier.
+- `risk_score` and `severity`: 100% deterministic v1 score (regression protected).
+- `ml_assessment`: ML classifier status, attack probability, binary prediction, confidence, and contributing feature factors.
+- `hybrid_risk`: Mathematical fusion score combining behaviour, sequence, ML probability, and context.
+- `explainability_factors`: Human-readable SOC bullet points.
 
 Missing events return HTTP 404:
 
 ```json
 {"error":"event_not_found","message":"Event 'E999999' does not exist.","event_id":"E999999"}
 ```
+
+## `GET /api/ml/status`
+
+Returns active ML model metadata, operational status, version, feature definitions, and training metrics:
+
+```json
+{
+  "available": true,
+  "status": "loaded",
+  "model_name": "RandomForestClassifier",
+  "model_version": "1.0.0",
+  "trained_at": "2026-08-28T18:02:15Z",
+  "features": [
+    "login_deviation_score", "after_hours_flag", "new_device_flag",
+    "sensitive_access_flag", "records_accessed_score", "permission_change_flag",
+    "new_beneficiary_flag", "transaction_amount_score", "transaction_frequency_score",
+    "sequence_matched_ratio"
+  ],
+  "training_metadata": { "split_method": "stratified_60_20_20" }
+}
+```
+
+## `GET /api/incidents`
+
+Returns correlated multi-stage security incidents (`INC-001`, `INC-002`, etc.) grouped by actor and temporal sequence lookback:
+
+```json
+[
+  {
+    "incident_id": "INC-001",
+    "user_id": "U001",
+    "title": "Correlated Multi-Stage Activity (U001)",
+    "start_time": "2026-03-02T02:11:04",
+    "end_time": "2026-03-02T02:22:15",
+    "event_count": 6,
+    "max_risk_score": 88.0,
+    "severity": "CRITICAL",
+    "investigation_priority": "P1 — Immediate",
+    "status": "OPEN",
+    "stages": [
+      { "stage_id": "STAGE_1", "name": "Ingress & Credential Usage", "events": [...] },
+      { "stage_id": "STAGE_2", "name": "Privilege Escalation", "events": [...] },
+      { "stage_id": "STAGE_3", "name": "Discovery & Sensitive Access", "events": [...] },
+      { "stage_id": "STAGE_4", "name": "Exfiltration & Financial Impact", "events": [...] }
+    ],
+    "events": ["E000408", "E000410", "E000412", "E000418"],
+    "primary_indicators": ["UNUSUAL_LOGIN", "PRIVILEGE_CHANGE", "SENSITIVE_ACCESS", "DATA_EXPORT"],
+    "top_event_id": "E000418"
+  }
+]
+```
+
+## `GET /api/incidents/{incident_id}`
+
+Returns single incident details by identifier. Returns HTTP 404 if not found.
 
 ## `GET /api/audit` (or `GET /audit`)
 
@@ -38,37 +99,6 @@ Returns chronological security event history and analyst-visible runtime risk as
 - `offset`: Offset index for pagination.
 - `sort_by`: Field to sort by (`timestamp`, `risk_score`, `severity`, `event_id`). Default: `timestamp`.
 - `order`: Sort direction (`desc`, `asc`). Default: `desc` (newest first).
-
-### Response Schema
-
-```json
-{
-  "items": [
-    {
-      "event_id": "E0408",
-      "timestamp": "2026-03-02T14:20:00",
-      "user_id": "U016",
-      "event_type": "data_export",
-      "risk_score": 55.0,
-      "severity": "HIGH",
-      "behaviour_score": 25.0,
-      "sequence_score": 100.0,
-      "context": {
-        "status": "no_context_found",
-        "multiplier": 1.0,
-        "info": null
-      },
-      "sequence": {
-        "chain_detected": true,
-        "matched_steps": [ ... ]
-      },
-      "signals": [ ... ],
-      "event": { ... }
-    }
-  ],
-  "total": 412
-}
-```
 
 ## `GET /api/security-analysis` (or `GET /api/dashboard`)
 
@@ -89,5 +119,3 @@ Returns intelligence aggregations including `risk_by_role`, `risk_by_account_typ
 ## `GET /api/events` (or `GET /events`)
 
 Returns scored runtime events (optionally filtered with `?user_id=<user_id>`).
-
-Scores are finite and bounded to 0-100. Severity values are `LOW`, `MODERATE`, `HIGH`, and `CRITICAL`. Runtime inference never reads ground truth.

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { SecurityEvent } from '../types/security';
 import { MOCK_EVENTS } from '../data/mockData';
 import { securityService, IS_MOCK_MODE } from '../services';
@@ -6,6 +6,24 @@ import { securityService, IS_MOCK_MODE } from '../services';
 export function useLiveBehaviourStream() {
   const [stream, setStream] = useState<SecurityEvent[]>(IS_MOCK_MODE ? MOCK_EVENTS : []);
   const [lastUpdated, setLastUpdated] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(!IS_MOCK_MODE);
+  const [isError, setIsError] = useState<boolean>(false);
+
+  const fetchStream = useCallback(async () => {
+    if (IS_MOCK_MODE) return;
+    try {
+      const events = await securityService.getEvents();
+      if (events && events.length > 0) {
+        setStream(events);
+        setLastUpdated(0);
+        setIsError(false);
+      }
+    } catch {
+      setIsError(true);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -16,20 +34,10 @@ export function useLiveBehaviourStream() {
     }, 1000);
 
     if (!IS_MOCK_MODE) {
-      const fetchStream = async () => {
-        try {
-          const events = await securityService.getEvents();
-          if (isMounted && events && events.length > 0) {
-            setStream(events);
-            setLastUpdated(0);
-          }
-        } catch {
-          // Handled gracefully
-        }
-      };
-
       fetchStream();
-      const pollInterval = setInterval(fetchStream, 8000);
+      const pollInterval = setInterval(() => {
+        if (isMounted) fetchStream();
+      }, 3000);
 
       return () => {
         isMounted = false;
@@ -57,7 +65,7 @@ export function useLiveBehaviourStream() {
       const user = randomUsers[Math.floor(Math.random() * randomUsers.length)];
       const event = randomEvents[Math.floor(Math.random() * randomEvents.length)];
       const now = new Date();
-      const timeStr = now.toTimeString().split(' ')[0];
+      const timeStr = now.toISOString();
 
       const newEvent: SecurityEvent = {
         event_id: `EVT-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -71,16 +79,16 @@ export function useLiveBehaviourStream() {
         location: 'Mumbai HQ'
       };
 
-      setStream((prev) => [newEvent, ...prev.slice(0, 19)]);
+      setStream((prev) => [newEvent, ...prev.slice(0, 49)]);
       setLastUpdated(0);
-    }, 12000);
+    }, 4000);
 
     return () => {
       isMounted = false;
       clearInterval(timer);
       clearInterval(eventTimer);
     };
-  }, []);
+  }, [fetchStream]);
 
-  return { stream, lastUpdated };
+  return { stream, lastUpdated, isLoading, isError, refetch: fetchStream };
 }

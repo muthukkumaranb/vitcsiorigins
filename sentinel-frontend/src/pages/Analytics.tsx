@@ -2,6 +2,7 @@ import React from 'react';
 import { useAnalyticsData } from '../hooks/useSecurityData';
 import { AnalyticsCharts } from '../components/analytics/AnalyticsCharts';
 import { ModelStatsCard } from '../components/analytics/ModelStatsCard';
+import { ModelRegistryPanel } from '../components/analytics/ModelRegistryPanel';
 import { LoadingSkeleton } from '../components/common/LoadingSkeleton';
 import { ErrorState } from '../components/common/ErrorState';
 import { KpiCard } from '../components/dashboard/KpiCard';
@@ -23,7 +24,7 @@ export const Analytics: React.FC = () => {
             INTELLIGENCE — Security Analytics
           </h1>
           <p className="text-xs text-gray-400">
-            Enterprise threat distribution, anomaly trend analysis & ML engine metrics
+            Enterprise threat distribution, anomaly trend analysis &amp; ML engine metrics
           </p>
         </div>
       </div>
@@ -63,10 +64,13 @@ export const Analytics: React.FC = () => {
         />
       </div>
 
-      {/* Model Transparency Section (Sec 26) */}
+      {/* Controlled Continuous Learning & Model Registry Panel (Plane B) */}
+      <ModelRegistryPanel />
+
+      {/* Model Transparency Section */}
       <ModelStatsCard stats={analytics.model_stats} />
 
-      {/* Analytics Tabbed Charts (Sec 25) */}
+      {/* Analytics Tabbed Charts */}
       <AnalyticsCharts data={analytics} />
     </div>
   );

@@ -59,6 +59,77 @@ export interface ContextResult {
   info: { context_id: string; type: string; manager_approval: boolean } | null;
 }
 
+export interface MLContributingFeature {
+  feature: string;
+  value: number;
+  importance: number;
+}
+
+export interface MLAssessment {
+  status: 'active' | 'unavailable' | 'error';
+  message?: string;
+  attack_probability: number | null;
+  prediction: number | null;
+  severity: RiskLevel | null;
+  confidence: number | null;
+  model_name: string | null;
+  model_version: string | null;
+  features: Record<string, number>;
+  contributing_features: MLContributingFeature[];
+}
+
+export interface HybridRisk {
+  hybrid_score: number;
+  fusion_mode: 'hybrid_fusion_v1' | 'deterministic_fallback';
+  weights: {
+    behaviour: number;
+    sequence: number;
+    ml: number;
+  };
+  formula: string;
+}
+
+export interface IncidentStageEvent {
+  event_id: string;
+  timestamp: string;
+  event_type: string;
+  risk_score: number;
+  severity: RiskLevel;
+}
+
+export interface IncidentStage {
+  stage_id: string;
+  name: string;
+  events: IncidentStageEvent[];
+}
+
+export interface SecurityIncident {
+  incident_id: string;
+  user_id: string;
+  title: string;
+  start_time: string;
+  end_time: string;
+  event_count: number;
+  max_risk_score: number;
+  severity: RiskLevel;
+  investigation_priority: string;
+  status: 'OPEN' | 'INVESTIGATING' | 'RESOLVED' | 'CLOSED';
+  stages: IncidentStage[];
+  events: string[];
+  primary_indicators: string[];
+  top_event_id?: string;
+}
+
+export interface MLStatus {
+  available: boolean;
+  status: 'loaded' | 'unavailable';
+  model_name: string | null;
+  model_version: string | null;
+  trained_at: string | null;
+  features: string[];
+  training_metadata: Record<string, any>;
+}
+
 export interface RiskResult {
   event_id: string;
   user_id: string;
@@ -72,7 +143,11 @@ export interface RiskResult {
   risk_breakdown: Record<string, number>;
   sequence: SequenceResult;
   context: ContextResult;
+  ml_assessment?: MLAssessment;
+  hybrid_risk?: HybridRisk;
+  explainability_factors?: string[];
 }
+
 
 export interface SecurityEvent {
   event_id: string;
@@ -271,4 +346,44 @@ export interface AnalyticsData {
   risk_by_account_type: { account_type: string; avg_risk: number; count: number }[];
   anomalies_trend: { date: string; anomalies: number; events: number }[];
   model_stats: ModelStats;
+}
+
+export type SimulationState = 'idle' | 'starting' | 'running' | 'paused' | 'stopping' | 'stopped' | 'error';
+
+export interface SimulationStatus {
+  state: SimulationState;
+  enabled: boolean;
+
+  mode: string;
+  interval_ms: number;
+  events_generated: number;
+  alerts_triggered: number;
+  last_event_id: string | null;
+  last_event_timestamp: string | null;
+  available_modes: string[];
+  total_stored_events: number;
+}
+
+export interface ModelRegistryVersion {
+  version: string;
+  model_name: string;
+  status: 'active' | 'candidate' | 'deprecated' | 'rejected' | 'rolled_back';
+  registered_at: string;
+  promoted_at?: string;
+  description: string;
+  metrics: {
+    accuracy: number;
+    precision: number;
+    recall: number;
+    f1_score: number;
+    false_positive_rate: number;
+    false_negative_rate?: number;
+    roc_auc?: number;
+  };
+}
+
+export interface ModelRegistryData {
+  active_version: string;
+  previous_version: string | null;
+  versions: Record<string, ModelRegistryVersion>;
 }
