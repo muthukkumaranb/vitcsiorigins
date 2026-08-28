@@ -1,7 +1,9 @@
 import React from 'react';
 import { Card } from '../common/Card';
 import { BaselineMetric } from '../../types/security';
-import { Activity, AlertTriangle, ArrowUpRight } from 'lucide-react';
+import { Activity, ArrowUpRight } from 'lucide-react';
+
+
 
 interface BaselineComparisonProps {
   metrics: BaselineMetric[];

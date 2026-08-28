@@ -1,7 +1,8 @@
 import React from 'react';
 import { Card } from '../common/Card';
 import { ContextAssessment } from '../../types/security';
-import { CheckCircle2, AlertTriangle, XCircle, Shield } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Shield } from 'lucide-react';
+
 import { clsx } from 'clsx';
 
 interface ContextAssessmentCardProps {

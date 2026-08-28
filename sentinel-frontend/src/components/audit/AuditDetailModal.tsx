@@ -15,6 +15,14 @@ import {
   Zap
 } from 'lucide-react';
 import { clsx } from 'clsx';
+import {
+  formatEventType,
+  formatContextStatus,
+  formatSeverity,
+  formatSequenceStep,
+  formatSignal,
+  formatTimestamp
+} from '../../utils/formatters';
 
 interface AuditDetailModalProps {
   event: AuditEventItem | null;
@@ -30,45 +38,59 @@ export const AuditDetailModal: React.FC<AuditDetailModalProps> = ({
   if (!event) return null;
 
   const getSeverityBadgeVariant = (severity: string) => {
-    const s = severity.toUpperCase();
-    if (s === 'CRITICAL' || s === 'HIGH' || s === 'LOW') return s as any;
-    return 'MEDIUM';
+    switch (severity?.toUpperCase()) {
+      case 'CRITICAL':
+        return 'CRITICAL';
+      case 'HIGH':
+        return 'HIGH';
+      case 'MODERATE':
+      case 'MEDIUM':
+        return 'MEDIUM';
+      case 'LOW':
+      default:
+        return 'LOW';
+    }
   };
+
+  const formatTimestampDisplay = (ts?: string) => {
+    return formatTimestamp(ts, 'detailed');
+  };
+
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title={`Security Event Investigation — ${event.event_id}`}
-      maxWidth="xl"
     >
-      <div className="space-y-6 max-h-[75vh] overflow-y-auto pr-1 text-gray-200">
-        {/* Top Header Card */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-[#0b0f17] p-4 rounded-lg border border-[#1f293d]">
+      <div className="space-y-6">
+        {/* Top Key Metadata Summary Banner */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-[#0e1420] p-3.5 rounded-lg border border-[#1f293d]">
           <div>
             <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1">
-              <Clock className="w-3 h-3 text-gray-500" /> Timestamp
+              <Clock className="w-3 h-3 text-gray-400" /> Timestamp
             </div>
-            <div className="text-xs font-mono font-medium text-gray-200">
-              {event.timestamp || 'N/A'}
+            <div className="text-xs font-mono font-bold text-gray-200">
+              {formatTimestampDisplay(event.timestamp)}
             </div>
           </div>
 
           <div>
             <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1">
-              <User className="w-3 h-3 text-cyan-400" /> User ID
+              <User className="w-3 h-3 text-gray-400" /> User Identifier
             </div>
             <div className="text-xs font-mono font-bold text-cyan-400">
-              {event.user_id || 'N/A'}
+              {event.user_id || 'System Event'}
             </div>
+
           </div>
 
           <div>
             <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1">
               <Activity className="w-3 h-3 text-gray-400" /> Event Type
             </div>
-            <div className="text-xs font-mono font-semibold text-gray-300 uppercase">
-              {event.event_type || 'N/A'}
+            <div className="text-xs font-sans font-bold text-gray-200">
+              {formatEventType(event.event_type)}
             </div>
           </div>
 
@@ -78,7 +100,7 @@ export const AuditDetailModal: React.FC<AuditDetailModalProps> = ({
             </div>
             <div>
               <Badge variant="risk" riskLevel={getSeverityBadgeVariant(event.severity)}>
-                {event.severity}
+                {formatSeverity(event.severity)}
               </Badge>
             </div>
           </div>
@@ -132,7 +154,7 @@ export const AuditDetailModal: React.FC<AuditDetailModalProps> = ({
                 {event.context?.multiplier ? `${event.context.multiplier}x` : '1.0x'}
               </div>
               <div className="text-[10px] text-gray-500 mt-0.5">
-                {event.context?.status === 'found' ? 'Context Applied' : 'No Suppression'}
+                {formatContextStatus(event.context?.status)}
               </div>
             </div>
           </div>
@@ -152,12 +174,13 @@ export const AuditDetailModal: React.FC<AuditDetailModalProps> = ({
                   className="flex items-start justify-between p-2.5 bg-[#111827] border border-[#1f293d] rounded text-xs"
                 >
                   <div className="space-y-1">
-                    <div className="font-mono font-bold text-orange-400 flex items-center gap-1.5">
+                    <div className="font-sans font-bold text-orange-400 flex items-center gap-1.5">
                       <AlertTriangle className="w-3.5 h-3.5" />
-                      {sig.signal}
+                      {formatSignal(sig.signal)}
                     </div>
                     <div className="text-gray-400 text-[11px]">{sig.description}</div>
                   </div>
+
                   <span className="font-mono font-bold text-red-400 text-xs shrink-0 ml-2">
                     +{sig.contribution} pts
                   </span>
@@ -200,11 +223,11 @@ export const AuditDetailModal: React.FC<AuditDetailModalProps> = ({
                   key={idx}
                   className="flex items-center justify-between p-2 bg-[#111827] border border-[#1f293d] rounded text-[11px] font-mono"
                 >
-                  <span className="text-purple-300 font-bold">
-                    Step {idx + 1}: {step.step}
+                  <span className="text-purple-300 font-bold font-sans">
+                    Step {idx + 1}: {formatSequenceStep(step.step)}
                   </span>
                   <span className="text-gray-400">
-                    Event {step.event_id} ({step.timestamp})
+                    Event {step.event_id} ({formatTimestamp(step.timestamp, 'compact')})
                   </span>
                 </div>
               ))}
@@ -222,15 +245,15 @@ export const AuditDetailModal: React.FC<AuditDetailModalProps> = ({
             <span className="text-gray-400">Status:</span>
             <span
               className={clsx(
-                'px-2 py-0.5 rounded font-mono text-[10px] uppercase font-bold border',
-                event.context?.status === 'found'
+                'px-2.5 py-0.5 rounded font-sans text-[11px] font-bold border',
+                event.context?.status === 'found' || event.context?.status === 'approved' || event.context?.status === 'matched'
                   ? 'bg-emerald-950 text-emerald-400 border-emerald-800'
                   : event.context?.status === 'ambiguous'
                   ? 'bg-yellow-950 text-yellow-400 border-yellow-800'
                   : 'bg-gray-800 text-gray-400 border-gray-700'
               )}
             >
-              {event.context?.status || 'no_context_found'}
+              {formatContextStatus(event.context?.status)}
             </span>
           </div>
           {event.context?.info && (
@@ -243,28 +266,32 @@ export const AuditDetailModal: React.FC<AuditDetailModalProps> = ({
         </div>
 
         {/* Raw Event Attributes */}
-        <div className="bg-[#0e1420] p-4 rounded-lg border border-[#1f293d]">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-gray-300 mb-3 flex items-center gap-1.5">
-            <FileText className="w-4 h-4 text-gray-400" />
-            Event Payload Attributes
-          </h4>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-mono">
-            {event.event &&
-              Object.entries(event.event)
-                .filter(([k]) => !k.startsWith('_'))
+        {event.event && (
+          <div className="bg-[#0e1420] p-4 rounded-lg border border-[#1f293d]">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-gray-300 mb-3 flex items-center gap-1.5">
+              <FileText className="w-4 h-4 text-gray-400" />
+              Event Payload Attributes
+            </h4>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-mono">
+              {Object.entries(event.event)
+                .filter(([k, val]) => !k.startsWith('_') && val !== '' && val !== null && val !== undefined)
                 .map(([key, val]) => (
                   <div
                     key={key}
                     className="p-2 bg-[#111827] rounded border border-[#1f293d]/60"
                   >
-                    <div className="text-[10px] text-gray-500 uppercase">{key}</div>
+                    <div className="text-[10px] text-gray-500 uppercase font-sans font-semibold">{key.replace(/_/g, ' ')}</div>
                     <div className="text-gray-300 truncate mt-0.5">
-                      {val !== '' && val !== null && val !== undefined ? String(val) : 'N/A'}
+                      {key.toLowerCase().includes('timestamp') || key.toLowerCase().includes('time')
+                        ? formatTimestamp(String(val), 'detailed')
+                        : String(val)}
                     </div>
                   </div>
                 ))}
+            </div>
           </div>
-        </div>
+        )}
+
       </div>
     </Modal>
   );

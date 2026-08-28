@@ -7,6 +7,8 @@ import { LoadingSkeleton } from '../components/common/LoadingSkeleton';
 import { ErrorState } from '../components/common/ErrorState';
 import { EmptyState } from '../components/common/EmptyState';
 import { AuditEventItem } from '../types/security';
+import { formatEventType } from '../utils/formatters';
+
 import {
   Search,
   RotateCcw,
@@ -318,10 +320,11 @@ export const Audit: React.FC = () => {
               <option value="ALL">All Event Types</option>
               {availableEventTypes.map((type) => (
                 <option key={type} value={type}>
-                  {type.toUpperCase()}
+                  {formatEventType(type)}
                 </option>
               ))}
             </select>
+
           </div>
 
           {/* User ID Dropdown */}

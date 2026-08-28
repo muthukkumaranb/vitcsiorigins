@@ -2,9 +2,13 @@ import React from 'react';
 import { Card } from '../common/Card';
 import { BehaviourSequence } from '../../types/security';
 import { Badge } from '../common/Badge';
-import { GitCommit, ArrowDown, ShieldAlert, AlertTriangle } from 'lucide-react';
+import { GitCommit, ArrowDown, AlertTriangle } from 'lucide-react';
+
+
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
+import { formatEventType, formatSeverity, formatTimestamp } from '../../utils/formatters';
+
 
 interface BehaviourSequenceTimelineProps {
   sequence: BehaviourSequence;
@@ -68,15 +72,19 @@ export const BehaviourSequenceTimeline: React.FC<BehaviourSequenceTimelineProps>
               <div className="bg-[#0b0f17] border border-[#1f293d] p-3.5 rounded-xl hover:border-cyan-500/50 transition-colors">
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-gray-400">{evt.timestamp}</span>
-                    <span className="text-xs font-black text-gray-100 uppercase tracking-wider">
-                      {evt.event_type}
+                    <span className="font-mono text-xs font-bold text-gray-400">
+                      {formatTimestamp(evt.timestamp, 'compact')}
+                    </span>
+                    <span className="text-xs font-bold text-gray-100">
+                      {formatEventType(evt.event_type)}
                     </span>
                   </div>
+
                   <Badge variant="risk" riskLevel={evt.risk_level}>
-                    {evt.risk_level}
+                    {formatSeverity(evt.risk_level)}
                   </Badge>
                 </div>
+
 
                 <p className="text-xs text-gray-300">{evt.description}</p>
 

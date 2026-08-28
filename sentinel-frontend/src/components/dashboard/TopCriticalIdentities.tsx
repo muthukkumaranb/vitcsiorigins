@@ -5,6 +5,8 @@ import { Identity } from '../../types/security';
 import { useNavigate } from 'react-router-dom';
 import { Users, ChevronRight, UserCheck } from 'lucide-react';
 import { clsx } from 'clsx';
+import { formatIdentityStatus } from '../../utils/formatters';
+
 
 interface TopCriticalIdentitiesProps {
   identities: Identity[];
@@ -59,9 +61,10 @@ export const TopCriticalIdentities: React.FC<TopCriticalIdentitiesProps> = ({ id
               return (
                 <tr
                   key={identity.user_id}
-                  onClick={() => navigate(`/investigation/${identity.user_id}`)}
+                  onClick={() => identity.top_event_id ? navigate(`/investigation/${identity.top_event_id}`) : navigate('/identities')}
                   className="hover:bg-[#161f30] transition-colors cursor-pointer group"
                 >
+
                   <td className="py-3 px-3">
                     <div className="flex items-center gap-2">
                       <div className="p-1 bg-cyan-950 text-cyan-400 rounded border border-cyan-800/60">
@@ -100,23 +103,27 @@ export const TopCriticalIdentities: React.FC<TopCriticalIdentitiesProps> = ({ id
                         {identity.risk_score}
                       </span>
                     ) : (
-                      <span className="text-gray-500">N/A</span>
+                      <span className="text-gray-500 font-sans text-[11px]">Unassessed</span>
                     )}
                   </td>
 
                   <td className="py-3 px-3 text-center font-bold text-cyan-300">
-                    {identity.trust_score !== undefined ? `${identity.trust_score}` : 'N/A'}
+                    {identity.trust_score !== undefined ? `${identity.trust_score}` : (
+                      <span className="text-gray-500 font-sans font-normal text-[11px]">Unassessed</span>
+                    )}
                   </td>
+
 
                   <td className="py-3 px-3 text-right">
                     {riskLevel ? (
                       <Badge variant="risk" riskLevel={riskLevel}>
-                        {identity.status || riskLevel}
+                        {formatIdentityStatus(identity.status || riskLevel)}
                       </Badge>
                     ) : (
-                      <span className="text-gray-500 text-[10px]">ACTIVE</span>
+                      <span className="text-gray-500 text-[10px]">Active</span>
                     )}
                   </td>
+
                 </tr>
               );
             })}

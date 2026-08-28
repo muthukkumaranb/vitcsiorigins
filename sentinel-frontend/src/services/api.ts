@@ -16,6 +16,7 @@ import {
   AnalystFeedback
 } from '../types/security';
 import { RiskResult } from '../types/security';
+import { formatSignal } from '../utils/formatters';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000').replace(/\/$/, '');
 
@@ -44,8 +45,9 @@ export const apiService = {
     risk_score: alert.risk_score,
     risk_level: alert.severity,
     timestamp: alert.timestamp,
-    primary_reasons: alert.signals.map((signal) => typeof signal === 'string' ? signal : signal.signal)
+    primary_reasons: alert.signals.map((signal) => typeof signal === 'string' ? formatSignal(signal) : (signal.description || formatSignal(signal.signal)))
   })),
+
   getIdentities: async (): Promise<Identity[]> => {
     return fetchJson<Identity[]>('/api/identities');
   },

@@ -3,6 +3,7 @@ import {
   Threat,
   Identity,
   RiskAssessment,
+  RiskResult,
   SecurityEvent,
   BehaviourSequence,
   BaselineMetric,
@@ -17,6 +18,7 @@ import {
   ResponseActionPayload,
   AnalystFeedback
 } from '../types/security';
+
 
 import {
   MOCK_IDENTITIES,
@@ -76,16 +78,51 @@ export const mockApiService = {
     };
   },
 
-  getRisk: async (userId: string): Promise<RiskAssessment> => {
+  getRisk: async (id: string): Promise<RiskAssessment | RiskResult> => {
     await delay();
-    if (userId.toUpperCase() === 'U0345') {
+    if (id.toUpperCase() === 'U0345') {
       return HERO_RISK_ASSESSMENT;
     }
-    const identity = currentIdentities.find((i) => i.user_id.toUpperCase() === userId.toUpperCase());
+    const mockEvent = MOCK_EVENTS.find((e) => e.event_id.toUpperCase() === id.toUpperCase());
+    if (mockEvent) {
+      const isCritical = mockEvent.risk_level === 'CRITICAL';
+      const isHigh = mockEvent.risk_level === 'HIGH';
+      const score = isCritical ? 88 : isHigh ? 65 : 22;
+      return {
+        event_id: mockEvent.event_id,
+        user_id: mockEvent.user_id,
+        event: {
+          event_id: mockEvent.event_id,
+          user_id: mockEvent.user_id,
+          timestamp: mockEvent.timestamp,
+          event_type: mockEvent.event_type,
+          transaction_amount: mockEvent.amount ? mockEvent.amount.replace(/[^0-9.]/g, '') : '0',
+          device_id: mockEvent.location || 'DEV-CORP'
+        },
+        behaviour_score: isCritical ? 80 : isHigh ? 50 : 15,
+        sequence_score: isCritical ? 95 : isHigh ? 70 : 20,
+        context_multiplier: 1.0,
+        risk_score: score,
+        severity: mockEvent.risk_level as any,
+        signals: [
+          { signal: 'BEHAVIOURAL_ANOMALY', contribution: 40, description: mockEvent.description }
+        ],
+        risk_breakdown: { 'Behavioural Deviation': 40, 'Sequence Chain': 30, 'Context Multiplier': 1.0 },
+        sequence: {
+          chain_detected: isCritical || isHigh,
+          matched_steps: [
+            { step: mockEvent.event_type, event_id: mockEvent.event_id, timestamp: mockEvent.timestamp, matched: true }
+          ]
+        },
+        context: { status: 'none', info: null }
+      };
+
+    }
+    const identity = currentIdentities.find((i) => i.user_id.toUpperCase() === id.toUpperCase());
     const score = identity?.risk_score ?? 45;
     const level = score >= 80 ? 'CRITICAL' : score >= 60 ? 'HIGH' : score >= 35 ? 'MEDIUM' : 'LOW';
     return {
-      user_id: userId,
+      user_id: id,
       risk_score: score,
       risk_level: level,
       trust_score: identity?.trust_score ?? 60,
@@ -101,6 +138,7 @@ export const mockApiService = {
       ]
     };
   },
+
 
   getBaseline: async (userId: string): Promise<BaselineMetric[]> => {
     await delay();

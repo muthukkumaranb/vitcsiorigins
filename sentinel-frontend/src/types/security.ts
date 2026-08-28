@@ -11,6 +11,7 @@ export interface Identity {
   department?: string;
   privilege_level: PrivilegeLevel;
   peer_group: string;
+  top_event_id?: string;
   trust_score?: number; // 0 - 100
   risk_score?: number;  // 0 - 100
   status?: IdentityStatus;
@@ -19,6 +20,7 @@ export interface Identity {
   normal_hours?: string;
   normal_location?: string;
 }
+
 
 export interface RiskFactor {
   name: string;

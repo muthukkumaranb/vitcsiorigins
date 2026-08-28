@@ -34,47 +34,48 @@ export function useIdentityData(userId: string) {
   });
 }
 
-export function useInvestigationData(userId: string) {
+export function useInvestigationData(id: string) {
   const identityQuery = useQuery({
-    queryKey: ['identity', userId],
-    queryFn: () => securityService.getIdentity(userId),
-    enabled: IS_MOCK_MODE && !!userId
+    queryKey: ['identity', id],
+    queryFn: () => securityService.getIdentity(id),
+    enabled: IS_MOCK_MODE && !!id
   });
 
   const riskQuery = useQuery<RiskAssessment | RiskResult>({
-    queryKey: ['risk', userId],
-    queryFn: () => securityService.getRisk(userId),
-    enabled: !!userId
+    queryKey: ['risk', id],
+    queryFn: () => securityService.getRisk(id),
+    enabled: !!id,
+    retry: false
   });
 
   const baselineQuery = useQuery({
-    queryKey: ['baseline', userId],
-    queryFn: () => securityService.getBaseline(userId),
-    enabled: IS_MOCK_MODE && !!userId
+    queryKey: ['baseline', id],
+    queryFn: () => securityService.getBaseline(id),
+    enabled: IS_MOCK_MODE && !!id
   });
 
   const peerQuery = useQuery({
-    queryKey: ['peer', userId],
-    queryFn: () => securityService.getPeerAnalysis(userId),
-    enabled: IS_MOCK_MODE && !!userId
+    queryKey: ['peer', id],
+    queryFn: () => securityService.getPeerAnalysis(id),
+    enabled: IS_MOCK_MODE && !!id
   });
 
   const sequenceQuery = useQuery({
-    queryKey: ['sequence', userId],
-    queryFn: () => securityService.getSequence(userId),
-    enabled: IS_MOCK_MODE && !!userId
+    queryKey: ['sequence', id],
+    queryFn: () => securityService.getSequence(id),
+    enabled: IS_MOCK_MODE && !!id
   });
 
   const contextQuery = useQuery({
-    queryKey: ['context', userId],
-    queryFn: () => securityService.getContext(userId),
-    enabled: IS_MOCK_MODE && !!userId
+    queryKey: ['context', id],
+    queryFn: () => securityService.getContext(id),
+    enabled: IS_MOCK_MODE && !!id
   });
 
   const graphQuery = useQuery({
-    queryKey: ['graph', userId],
-    queryFn: () => securityService.getRelationshipGraph(userId),
-    enabled: IS_MOCK_MODE && !!userId
+    queryKey: ['graph', id],
+    queryFn: () => securityService.getRelationshipGraph(id),
+    enabled: IS_MOCK_MODE && !!id
   });
 
   return {
@@ -85,24 +86,28 @@ export function useInvestigationData(userId: string) {
     sequence: sequenceQuery.data,
     context: contextQuery.data,
     graph: graphQuery.data,
-    isLoading:
-      identityQuery.isLoading ||
-      riskQuery.isLoading ||
-      (IS_MOCK_MODE && baselineQuery.isLoading) ||
-      peerQuery.isLoading ||
-      sequenceQuery.isLoading ||
-      contextQuery.isLoading ||
-      graphQuery.isLoading,
-    isError:
-      (IS_MOCK_MODE && identityQuery.isError) ||
-      riskQuery.isError ||
-      baselineQuery.isError ||
-      peerQuery.isError ||
-      sequenceQuery.isError ||
-      contextQuery.isError ||
-      graphQuery.isError
+    isLoading: IS_MOCK_MODE
+      ? identityQuery.isLoading ||
+        riskQuery.isLoading ||
+        baselineQuery.isLoading ||
+        peerQuery.isLoading ||
+        sequenceQuery.isLoading ||
+        contextQuery.isLoading ||
+        graphQuery.isLoading
+      : riskQuery.isLoading,
+    isError: IS_MOCK_MODE
+      ? identityQuery.isError ||
+        riskQuery.isError ||
+        baselineQuery.isError ||
+        peerQuery.isError ||
+        sequenceQuery.isError ||
+        contextQuery.isError ||
+        graphQuery.isError
+      : riskQuery.isError,
+    error: riskQuery.error
   };
 }
+
 
 export function useAnalyticsData() {
   return useQuery({
