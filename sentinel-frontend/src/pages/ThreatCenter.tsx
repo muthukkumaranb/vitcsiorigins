@@ -21,8 +21,8 @@ export const ThreatCenter: React.FC = () => {
   const filteredThreats = threats.filter((t) => {
     const matchesSearch =
       t.user_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (t.user_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (t.role || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       t.primary_reasons.some((r) => r.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesRisk = selectedRisk === 'ALL' || t.risk_level === selectedRisk;

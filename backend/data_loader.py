@@ -22,7 +22,7 @@ context.csv (contexts):
     manager_approval_flag
 
 Notes on real data observed during inspection (2026-03 sample):
-  - events.csv has 736 rows, no duplicate event_ids, every event_id's
+    - events.csv has 412 rows, no duplicate event_ids, every event_id's
     user_id exists in users.csv.
   - Several event columns are legitimately blank depending on event_type
     (resource_id, new_permission_level, beneficiary_id). These are NOT
@@ -41,7 +41,8 @@ import csv
 import os
 from datetime import datetime
 
-DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+REPOSITORY_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(REPOSITORY_ROOT, "output")
 
 EVENTS_PATH = os.path.join(DATA_DIR, "events.csv")
 USERS_PATH = os.path.join(DATA_DIR, "users.csv")

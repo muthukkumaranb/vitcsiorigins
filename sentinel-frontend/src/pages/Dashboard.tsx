@@ -34,7 +34,7 @@ export const Dashboard: React.FC = () => {
             COMMAND CENTER — Security Posture
           </h1>
           <p className="text-xs text-gray-400">
-            Real-time privileged environment behavior & trust scoring telemetry
+            CSV-backed privileged behavior and trust scoring telemetry
           </p>
         </div>
       </div>

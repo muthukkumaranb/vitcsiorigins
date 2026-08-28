@@ -79,13 +79,13 @@ export const mockApiService = {
       return HERO_RISK_ASSESSMENT;
     }
     const identity = currentIdentities.find((i) => i.user_id.toUpperCase() === userId.toUpperCase());
-    const score = identity ? identity.risk_score : 45;
+    const score = identity?.risk_score ?? 45;
     const level = score >= 80 ? 'CRITICAL' : score >= 60 ? 'HIGH' : score >= 35 ? 'MEDIUM' : 'LOW';
     return {
       user_id: userId,
       risk_score: score,
       risk_level: level,
-      trust_score: identity ? identity.trust_score : 60,
+      trust_score: identity?.trust_score ?? 60,
       anomaly_score: score + 3,
       behaviour_score: score - 2,
       sequence_score: score - 5,

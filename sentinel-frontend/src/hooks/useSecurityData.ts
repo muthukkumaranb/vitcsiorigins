@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { securityService } from '../services';
-import { ResponseActionPayload, AnalystFeedback } from '../types/security';
+import { IS_MOCK_MODE } from '../services';
+import { ResponseActionPayload, AnalystFeedback, RiskAssessment, RiskResult } from '../types/security';
 
 export function useDashboardData() {
   return useQuery({
@@ -37,10 +38,10 @@ export function useInvestigationData(userId: string) {
   const identityQuery = useQuery({
     queryKey: ['identity', userId],
     queryFn: () => securityService.getIdentity(userId),
-    enabled: !!userId
+    enabled: IS_MOCK_MODE && !!userId
   });
 
-  const riskQuery = useQuery({
+  const riskQuery = useQuery<RiskAssessment | RiskResult>({
     queryKey: ['risk', userId],
     queryFn: () => securityService.getRisk(userId),
     enabled: !!userId
@@ -49,31 +50,31 @@ export function useInvestigationData(userId: string) {
   const baselineQuery = useQuery({
     queryKey: ['baseline', userId],
     queryFn: () => securityService.getBaseline(userId),
-    enabled: !!userId
+    enabled: IS_MOCK_MODE && !!userId
   });
 
   const peerQuery = useQuery({
     queryKey: ['peer', userId],
     queryFn: () => securityService.getPeerAnalysis(userId),
-    enabled: !!userId
+    enabled: IS_MOCK_MODE && !!userId
   });
 
   const sequenceQuery = useQuery({
     queryKey: ['sequence', userId],
     queryFn: () => securityService.getSequence(userId),
-    enabled: !!userId
+    enabled: IS_MOCK_MODE && !!userId
   });
 
   const contextQuery = useQuery({
     queryKey: ['context', userId],
     queryFn: () => securityService.getContext(userId),
-    enabled: !!userId
+    enabled: IS_MOCK_MODE && !!userId
   });
 
   const graphQuery = useQuery({
     queryKey: ['graph', userId],
     queryFn: () => securityService.getRelationshipGraph(userId),
-    enabled: !!userId
+    enabled: IS_MOCK_MODE && !!userId
   });
 
   return {
@@ -87,13 +88,13 @@ export function useInvestigationData(userId: string) {
     isLoading:
       identityQuery.isLoading ||
       riskQuery.isLoading ||
-      baselineQuery.isLoading ||
+      (IS_MOCK_MODE && baselineQuery.isLoading) ||
       peerQuery.isLoading ||
       sequenceQuery.isLoading ||
       contextQuery.isLoading ||
       graphQuery.isLoading,
     isError:
-      identityQuery.isError ||
+      (IS_MOCK_MODE && identityQuery.isError) ||
       riskQuery.isError ||
       baselineQuery.isError ||
       peerQuery.isError ||

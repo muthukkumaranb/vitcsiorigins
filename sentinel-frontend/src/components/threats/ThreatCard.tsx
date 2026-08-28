@@ -30,12 +30,12 @@ export const ThreatCard: React.FC<ThreatCardProps> = ({ threat }) => {
           <div>
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-base text-gray-100 font-mono">{threat.user_id}</span>
-              <Badge variant="account" accountType={threat.account_type}>
-                {threat.account_type}
+              <Badge variant="account" accountType={threat.account_type || 'Employee'}>
+                {threat.account_type || 'Not available'}
               </Badge>
             </div>
-            <p className="text-xs text-gray-300 font-medium mt-0.5">{threat.role}</p>
-            <p className="text-[10px] text-gray-400 font-mono mt-0.5">{threat.user_name}</p>
+            <p className="text-xs text-gray-300 font-medium mt-0.5">{threat.role || 'Not available'}</p>
+            <p className="text-[10px] text-gray-400 font-mono mt-0.5">{threat.user_name || 'Not available'}</p>
           </div>
 
           <div className="text-right shrink-0">
@@ -66,7 +66,7 @@ export const ThreatCard: React.FC<ThreatCardProps> = ({ threat }) => {
             Primary Threat Indicators ({threat.primary_reasons.length})
           </h4>
           <ul className="space-y-1">
-            {threat.primary_reasons.map((reason, idx) => (
+            {threat.primary_reasons.length ? threat.primary_reasons.map((reason, idx) => (
               <li
                 key={idx}
                 className="text-xs text-gray-300 flex items-start gap-2 bg-[#0b0f17]/50 px-2.5 py-1 rounded border border-[#1f293d]/60"
@@ -74,7 +74,7 @@ export const ThreatCard: React.FC<ThreatCardProps> = ({ threat }) => {
                 <span className="text-cyan-400 font-mono text-[10px] mt-0.5">•</span>
                 <span>{reason}</span>
               </li>
-            ))}
+            )) : <li className="text-xs text-gray-400">None</li>}
           </ul>
         </div>
       </div>
@@ -89,7 +89,7 @@ export const ThreatCard: React.FC<ThreatCardProps> = ({ threat }) => {
               isCritical ? 'text-red-400' : 'text-orange-400'
             )}
           >
-            {threat.recommended_action}
+            {threat.recommended_action || 'Review'}
           </div>
         </div>
 
@@ -97,7 +97,7 @@ export const ThreatCard: React.FC<ThreatCardProps> = ({ threat }) => {
           variant={isCritical ? 'danger' : 'primary'}
           size="sm"
           icon={<ArrowRight className="w-3.5 h-3.5" />}
-          onClick={() => navigate(`/investigation/${threat.user_id}`)}
+          onClick={() => navigate(`/investigation/${threat.event_id || threat.user_id}`)}
         >
           INVESTIGATE
         </Button>

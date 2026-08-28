@@ -12,6 +12,7 @@ import {
   Search
 } from 'lucide-react';
 import { clsx } from 'clsx';
+import { IS_MOCK_MODE } from '../../services';
 
 export const Sidebar: React.FC = () => {
   const location = useLocation();
@@ -26,14 +27,14 @@ export const Sidebar: React.FC = () => {
     {
       title: 'DETECTION',
       items: [
-        { label: 'Threat Center', path: '/threats', icon: ShieldAlert, badge: '3 CRITICAL' },
+        { label: 'Threat Center', path: '/threats', icon: ShieldAlert, badge: IS_MOCK_MODE ? 'DEMO' : undefined },
         { label: 'Privileged Identities', path: '/identities', icon: Users }
       ]
     },
     {
       title: 'INTELLIGENCE',
       items: [
-        { label: 'Behaviour & Risk', path: '/investigation/U0345', icon: Activity, badge: 'U0345' },
+        { label: 'Behaviour & Risk', path: '/threats', icon: Activity },
         { label: 'Security Analytics', path: '/analytics', icon: BarChart3 }
       ]
     },
@@ -74,12 +75,12 @@ export const Sidebar: React.FC = () => {
       {/* Quick Search Shortcut */}
       <div className="px-4 py-3 border-b border-[#1f293d]/50">
         <NavLink
-          to="/investigation/U0345"
+          to="/threats"
           className="flex items-center justify-between px-3 py-1.5 text-xs bg-[#111827] border border-[#1f293d] text-gray-400 rounded-lg hover:border-cyan-500/40 hover:text-gray-200 transition-colors"
         >
           <span className="flex items-center gap-2">
             <Search className="w-3.5 h-3.5 text-cyan-400" />
-            Investigate U0345...
+            Investigate an alert...
           </span>
           <kbd className="px-1.5 py-0.5 text-[10px] bg-[#1f293d] text-gray-300 rounded font-mono">
             ⌘K

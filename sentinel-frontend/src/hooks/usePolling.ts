@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { SecurityEvent } from '../types/security';
 import { MOCK_EVENTS } from '../data/mockData';
+import { IS_MOCK_MODE } from '../services';
 
 export function useLiveBehaviourStream() {
-  const [stream, setStream] = useState<SecurityEvent[]>(MOCK_EVENTS);
+  const [stream, setStream] = useState<SecurityEvent[]>(IS_MOCK_MODE ? MOCK_EVENTS : []);
   const [lastUpdated, setLastUpdated] = useState<number>(0);
 
   useEffect(() => {
@@ -12,7 +13,11 @@ export function useLiveBehaviourStream() {
       setLastUpdated((prev) => prev + 1);
     }, 1000);
 
-    // Simulated new live incoming event stream push
+    if (!IS_MOCK_MODE) {
+      return () => clearInterval(timer);
+    }
+
+    // Simulated stream is intentionally restricted to mock mode.
     const eventTimer = setInterval(() => {
       const randomUsers = [
         { id: 'U0345', name: 'Vikram Sharma', role: 'Finance Ops' },

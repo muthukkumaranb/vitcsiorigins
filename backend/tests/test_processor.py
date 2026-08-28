@@ -1,104 +1,124 @@
-"""
-test_processor.py
-
-Run with:  python -m pytest tests/ -v
-(or:       python tests/test_processor.py   to run standalone)
-
-Uses real IDs from the provided datasets:
-  - E000001 : valid event, user U006, no matching context (outside the
-              one known context window) -> Test 1
-  - E000664 : valid event, user U002, timestamp 2026-03-11T02:19:00 falls
-              inside CTX_SCEN_SUPPRESSED_01's window
-              (2026-03-11T01:43:00 - 2026-03-11T04:13:00) -> context match
-  - E000684 : same user U002, later the same day, OUTSIDE the context
-              window -> confirms context matching isn't just "any event
-              from that user"
-  - E999999 : does not exist -> Test 2
-  - Test 3 (user profile missing) is simulated by injecting a synthetic
-    event into the in-memory store, since every real event in the
-    provided dataset happens to reference a valid user.
-"""
-
 import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from app import app
 from data_loader import store
-from processor import process_event, get_event, get_user_profile, get_context, EventNotFoundError
+from processor import calculate_behaviour, calculate_sequence, get_context, get_event, process_event, EventNotFoundError
 
 
-def test_1_valid_event_no_context():
-    result = process_event("E000001")
-    assert result["event_id"] == "E000001"
-    assert result["user_id"] == "U006"
-    assert result["user_status"] == "found"
-    assert result["context_status"] == "no_context_found"
-    assert result["risk_score"] == 0.0
+def test_normal_event_is_low():
+    result = process_event("E0412")
     assert result["severity"] == "LOW"
-    print("Test 1 PASSED:", result)
+    assert 0 <= result["risk_score"] < 25
 
 
-def test_1b_valid_event_with_matching_context():
-    result = process_event("E000664")
-    assert result["user_id"] == "U002"
-    assert result["context_status"] == "found"
-    assert result["_debug"]["context"]["context_id"] == "CTX_SCEN_SUPPRESSED_01"
-    print("Test 1b PASSED (context matched):", result["_debug"]["context"])
+def test_behaviour_anomaly_has_explainable_signals():
+    result = process_event("E0404")
+    names = {signal["signal"] for signal in result["signals"]}
+    assert result["behaviour_score"] > 0
+    assert {"SENSITIVE_ACCESS", "LARGE_DATA_ACCESS"}.issubset(names)
 
 
-def test_1c_same_user_outside_context_window():
-    result = process_event("E000684")
-    assert result["user_id"] == "U002"
-    assert result["context_status"] == "no_context_found"
-    print("Test 1c PASSED (context correctly NOT matched outside window)")
+def test_sequence_detects_insider_chain():
+    result = process_event("E0408")
+    assert result["sequence_score"] > 0
+    assert result["sequence"]["chain_detected"] is True
+    assert result["sequence"]["matched_steps"][-1]["step"] == "DATA_EXPORT"
 
 
-def test_2_invalid_event_id():
+def test_context_matches_user_and_time():
+    result = process_event("E0402")
+    assert result["context"]["status"] == "found"
+    assert result["context_multiplier"] == 0.8
+
+
+def test_context_outside_window_is_absent():
+    result = process_event("E0001")
+    assert result["context"]["status"] == "no_context_found"
+    assert result["context_multiplier"] == 1.0
+
+
+def test_context_suppresses_without_zeroing():
+    result = process_event("E0402")
+    raw = combine_without_context(result["behaviour_score"], result["sequence_score"])
+    assert 0 < result["risk_score"] < raw
+
+
+def combine_without_context(behaviour_score, sequence_score):
+    return round(min(100.0, max(0.0, behaviour_score * 0.6 + sequence_score * 0.4)), 2)
+
+
+def test_risk_is_bounded_and_finite():
+    for event_id in ("E0402", "E0404", "E0407", "E0408", "E0412"):
+        score = process_event(event_id)["risk_score"]
+        assert 0 <= score <= 100
+        assert score == score
+
+
+def test_missing_event_raises_and_api_returns_404():
     try:
         process_event("E999999")
-        raise AssertionError("Expected EventNotFoundError")
-    except EventNotFoundError as e:
-        assert e.event_id == "E999999"
-        print("Test 2 PASSED: EventNotFoundError raised as expected")
+        assert False
+    except EventNotFoundError:
+        pass
+    response = app.test_client().get("/api/events/E999999/risk/")
+    assert response.status_code == 404
+    assert response.get_json()["error"] == "event_not_found"
 
 
-def test_3_event_with_missing_user():
-    # Inject a synthetic event referencing a user that does not exist,
-    # to prove the backend handles this without crashing. Cleaned up
-    # afterwards so it doesn't pollute other tests.
-    fake_id = "E_TEST_MISSING_USER"
-    store.events_by_id[fake_id] = {
-        "event_id": fake_id,
-        "user_id": "U_DOES_NOT_EXIST",
-        "timestamp": "2026-03-02T01:05:00",
-        "event_type": "login",
-        "_parsed_timestamp": None,
-    }
-    try:
-        result = process_event(fake_id)
-        assert result["user_status"] == "not_found"
-        assert result["user_id"] == "U_DOES_NOT_EXIST"
-        print("Test 3 PASSED:", result)
-    finally:
-        del store.events_by_id[fake_id]
+def test_no_ground_truth_in_runtime_loader():
+    assert "ground_truth" not in store.events_path.lower()
+    assert "ground_truth" not in store.users_path.lower()
+    assert "ground_truth" not in store.context_path.lower()
 
 
-def test_get_functions_directly():
-    event = get_event("E000001")
-    assert event is not None
-    user = get_user_profile(event["user_id"])
-    assert user is not None
-    context = get_context(event)
-    assert context is None  # E000001 has no matching context
-    print("Direct get_* function tests PASSED")
+def test_required_response_fields_are_deterministic():
+    result = process_event("E0408")
+    for field in ("event_id", "user_id", "behaviour_score", "sequence_score", "context_multiplier", "risk_score", "severity", "signals", "risk_breakdown", "sequence", "context"):
+        assert field in result
+    assert isinstance(result["signals"], list)
+    assert isinstance(result["risk_breakdown"], dict)
 
 
-if __name__ == "__main__":
-    test_1_valid_event_no_context()
-    test_1b_valid_event_with_matching_context()
-    test_1c_same_user_outside_context_window()
-    test_2_invalid_event_id()
-    test_3_event_with_missing_user()
-    test_get_functions_directly()
-    print("\nAll tests passed.")
+def test_severity_boundaries():
+    from processor import classify_severity
+    assert classify_severity(24) == "LOW"
+    assert classify_severity(25) == "MODERATE"
+    assert classify_severity(49) == "MODERATE"
+    assert classify_severity(50) == "HIGH"
+    assert classify_severity(74) == "HIGH"
+    assert classify_severity(75) == "CRITICAL"
+    assert classify_severity(100) == "CRITICAL"
+
+
+def test_future_events_do_not_affect_current_sequence():
+    event = dict(store.events_by_id["E0404"])
+    future = dict(store.events_by_id["E0408"])
+    future["_parsed_timestamp"] = event["_parsed_timestamp"] + __import__("datetime").timedelta(minutes=1)
+    result_without_future = calculate_sequence(event, store.users_by_id[event["user_id"]], [])
+    result_with_future = calculate_sequence(event, store.users_by_id[event["user_id"]], [future])
+    assert result_with_future == result_without_future
+
+
+def test_partial_and_wrong_order_sequences_are_not_complete():
+    event = dict(store.events_by_id["E0404"])
+    user = store.users_by_id[event["user_id"]]
+    partial = calculate_sequence(event, user, [store.events_by_id["E0403"]])
+    assert partial["sequence_score"] > 0
+    assert partial["chain_detected"] is False
+    wrong_order = calculate_sequence(event, user, [store.events_by_id["E0405"]])
+    assert wrong_order["chain_detected"] is False
+
+
+def test_collection_endpoints_return_live_data():
+    client = app.test_client()
+    health = client.get("/api/health").get_json()
+    alerts = client.get("/api/alerts").get_json()
+    identities = client.get("/api/identities").get_json()
+    assert health["events"] == len(store.events_by_id)
+    assert health["contexts"] == len(store.contexts)
+    assert len(identities) == len(store.users_by_id)
+    assert len(alerts) > 0
+    assert all(alerts[index]["risk_score"] >= alerts[index + 1]["risk_score"] for index in range(len(alerts) - 1))

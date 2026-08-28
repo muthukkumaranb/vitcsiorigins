@@ -1,20 +1,20 @@
-export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+export type RiskLevel = 'LOW' | 'MEDIUM' | 'MODERATE' | 'HIGH' | 'CRITICAL';
 export type AccountType = 'Employee' | 'Administrator' | 'Service Account' | 'Automated System';
-export type PrivilegeLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'SYSTEM_ADMIN';
+export type PrivilegeLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'SYSTEM_ADMIN' | 'NOT_AVAILABLE';
 export type IdentityStatus = 'ACTIVE' | 'MONITORED' | 'RESTRICTED' | 'SUSPENDED' | 'UNDER_INVESTIGATION' | 'CRITICAL';
 
 export interface Identity {
   user_id: string;
-  name: string;
+  name?: string;
   account_type: AccountType;
   role: string;
-  department: string;
+  department?: string;
   privilege_level: PrivilegeLevel;
   peer_group: string;
-  trust_score: number; // 0 - 100
-  risk_score: number;  // 0 - 100
-  status: IdentityStatus;
-  last_activity: string;
+  trust_score?: number; // 0 - 100
+  risk_score?: number;  // 0 - 100
+  status?: IdentityStatus;
+  last_activity?: string;
   avatar_url?: string;
   normal_hours?: string;
   normal_location?: string;
@@ -39,6 +39,37 @@ export interface RiskAssessment {
   context_score: number;
   recommended_action: 'MONITOR' | 'VERIFY' | 'RESTRICT' | 'SUSPEND' | 'SUSPEND + ESCALATE';
   risk_factors: RiskFactor[];
+}
+
+export interface BehaviourSignal {
+  signal: string;
+  contribution: number;
+  description: string;
+}
+
+export interface SequenceResult {
+  chain_detected: boolean;
+  matched_steps: Array<{ step: string; event_id: string; timestamp: string; matched: boolean }>;
+}
+
+export interface ContextResult {
+  status: 'none' | 'matched' | 'ambiguous';
+  info: { context_id: string; type: string; manager_approval: boolean } | null;
+}
+
+export interface RiskResult {
+  event_id: string;
+  user_id: string;
+  event: Record<string, string>;
+  behaviour_score: number;
+  sequence_score: number;
+  context_multiplier: number;
+  risk_score: number;
+  severity: 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+  signals: BehaviourSignal[];
+  risk_breakdown: Record<string, number>;
+  sequence: SequenceResult;
+  context: ContextResult;
 }
 
 export interface SecurityEvent {
@@ -116,17 +147,18 @@ export interface RelationshipGraphData {
 }
 
 export interface Threat {
-  threat_id: string;
+  threat_id?: string;
+  event_id?: string;
   user_id: string;
-  user_name: string;
-  role: string;
-  account_type: AccountType;
+  user_name?: string;
+  role?: string;
+  account_type?: AccountType;
   risk_score: number;
   risk_level: RiskLevel;
   timestamp: string;
   primary_reasons: string[];
-  recommended_action: string;
-  status: 'OPEN' | 'INVESTIGATING' | 'RESOLVED' | 'DISMISSED';
+  recommended_action?: string;
+  status?: 'OPEN' | 'INVESTIGATING' | 'RESOLVED' | 'DISMISSED';
 }
 
 export interface ResponseActionPayload {

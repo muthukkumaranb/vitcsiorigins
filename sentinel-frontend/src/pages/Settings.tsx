@@ -1,3 +1,4 @@
+  import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000'
 import React, { useState } from 'react';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
@@ -7,7 +8,7 @@ import { Settings as SettingsIcon, ShieldCheck, Database, Server, Save, CheckCir
 export const Settings: React.FC = () => {
   const [useMockData] = useState<boolean>(IS_MOCK_MODE);
   const [apiBaseUrl, setApiBaseUrl] = useState<string>(
-    import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+    import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000'
   );
   const [criticalThreshold, setCriticalThreshold] = useState<number>(80);
   const [highThreshold, setHighThreshold] = useState<number>(60);

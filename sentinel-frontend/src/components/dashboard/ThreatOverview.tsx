@@ -36,7 +36,7 @@ export const ThreatOverview: React.FC<ThreatOverviewProps> = ({ counts }) => {
       glow: 'glow-high'
     },
     {
-      level: 'MEDIUM',
+      level: 'MODERATE',
       count: counts.medium,
       icon: Info,
       textColor: 'text-yellow-500',
