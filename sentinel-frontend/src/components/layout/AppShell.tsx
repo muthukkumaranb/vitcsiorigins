@@ -9,7 +9,7 @@ export const AppShell: React.FC = () => {
   const { lastUpdated } = useLiveBehaviourStream();
 
   return (
-    <div className="flex min-h-screen bg-[#0b0f17] text-gray-100 font-sans antialiased">
+    <div className="flex min-h-screen bg-[#0b0f17] dark:bg-[#0b0f17] light:bg-slate-50 text-gray-100 dark:text-gray-100 light:text-slate-900 font-sans antialiased transition-colors">
       {/* Sidebar */}
       <Sidebar />
 

@@ -2,12 +2,16 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Play, Pause, Square, RotateCcw, FastForward, Activity, ShieldAlert, Clock, RefreshCw, Radio } from 'lucide-react';
 import { apiService } from '../../services/api';
 import { SimulationStatus } from '../../types/security';
+import { useAuth } from '../../context/AuthContext';
 
 interface SimulationControlWidgetProps {
   onEventIngested?: () => void;
 }
 
 export const SimulationControlWidget: React.FC<SimulationControlWidgetProps> = ({ onEventIngested }) => {
+  const { canPerformAction } = useAuth();
+  const canSimulate = canPerformAction('simulate');
+
   const [status, setStatus] = useState<SimulationStatus | null>(null);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [isProcessingStep, setIsProcessingStep] = useState(false);
@@ -244,61 +248,69 @@ export const SimulationControlWidget: React.FC<SimulationControlWidgetProps> = (
 
         {/* Buttons: Cohesive Action Toolbar */}
         <div className="flex items-center gap-2">
-          {/* Start / Pause Main Action Button */}
-          {isRunning ? (
-            <button
-              onClick={handlePause}
-              disabled={loadingAction === 'pause'}
-              className="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition-all shadow-md shadow-amber-950/60 disabled:opacity-50 cursor-pointer"
-            >
-              <Pause className="w-3.5 h-3.5 fill-current" />
-              <span>Pause</span>
-            </button>
+          {!canSimulate ? (
+            <div className="text-[11px] text-amber-400/90 bg-amber-950/40 border border-amber-800/50 px-3 py-1.5 rounded-lg font-medium">
+              Simulation controls restricted to SOC Administrator (RBAC)
+            </div>
           ) : (
-            <button
-              onClick={handleStart}
-              disabled={isStarting || loadingAction === 'start'}
-              className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition-all shadow-md shadow-emerald-950/60 disabled:opacity-50 cursor-pointer"
-            >
-              <Play className="w-3.5 h-3.5 fill-current" />
-              <span>{isPaused ? 'Resume' : isStarting ? 'Starting...' : 'Start'}</span>
-            </button>
+            <>
+              {/* Start / Pause Main Action Button */}
+              {isRunning ? (
+                <button
+                  onClick={handlePause}
+                  disabled={loadingAction === 'pause'}
+                  className="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition-all shadow-md shadow-amber-950/60 disabled:opacity-50 cursor-pointer"
+                >
+                  <Pause className="w-3.5 h-3.5 fill-current" />
+                  <span>Pause</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleStart}
+                  disabled={isStarting || loadingAction === 'start'}
+                  className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition-all shadow-md shadow-emerald-950/60 disabled:opacity-50 cursor-pointer"
+                >
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <span>{isPaused ? 'Resume' : isStarting ? 'Starting...' : 'Start'}</span>
+                </button>
+              )}
+
+              {/* Step Button */}
+              <button
+                onClick={handleStep}
+                disabled={isProcessingStep || isRunning || isStarting}
+                title="Inject a single event into detection pipeline"
+                className="flex items-center gap-1.5 bg-cyan-700/80 hover:bg-cyan-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition border border-cyan-500/40 disabled:opacity-40 cursor-pointer"
+              >
+                <FastForward className={`w-3.5 h-3.5 ${isProcessingStep ? 'animate-spin' : ''}`} />
+                <span>{isProcessingStep ? 'Stepping...' : 'Step'}</span>
+              </button>
+
+              {/* Stop Button */}
+              {(isRunning || isPaused) && (
+                <button
+                  onClick={handleStop}
+                  disabled={loadingAction === 'stop'}
+                  title="Stop continuous simulation"
+                  className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-1.5 rounded-lg transition border border-slate-700 disabled:opacity-50 cursor-pointer"
+                >
+                  <Square className="w-3 h-3 fill-current" />
+                  <span>Stop</span>
+                </button>
+              )}
+
+              {/* Reset Baseline Button */}
+              <button
+                onClick={handleReset}
+                disabled={loadingAction === 'reset' || isStarting}
+                title="Reset live buffer to frozen 412 baseline events"
+                className="flex items-center gap-1.5 bg-[#080b11] hover:bg-slate-800 text-gray-300 hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition border border-[#1f293d] disabled:opacity-50 cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset</span>
+              </button>
+            </>
           )}
-
-          {/* Step Button */}
-          <button
-            onClick={handleStep}
-            disabled={isProcessingStep || isRunning || isStarting}
-            title="Inject a single event into detection pipeline"
-            className="flex items-center gap-1.5 bg-cyan-700/80 hover:bg-cyan-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition border border-cyan-500/40 disabled:opacity-40 cursor-pointer"
-          >
-            <FastForward className={`w-3.5 h-3.5 ${isProcessingStep ? 'animate-spin' : ''}`} />
-            <span>{isProcessingStep ? 'Stepping...' : 'Step'}</span>
-          </button>
-
-          {/* Stop Button */}
-          {(isRunning || isPaused) && (
-            <button
-              onClick={handleStop}
-              disabled={loadingAction === 'stop'}
-              title="Stop continuous simulation"
-              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-1.5 rounded-lg transition border border-slate-700 disabled:opacity-50 cursor-pointer"
-            >
-              <Square className="w-3 h-3 fill-current" />
-              <span>Stop</span>
-            </button>
-          )}
-
-          {/* Reset Baseline Button */}
-          <button
-            onClick={handleReset}
-            disabled={loadingAction === 'reset' || isStarting}
-            title="Reset live buffer to frozen 412 baseline events"
-            className="flex items-center gap-1.5 bg-[#080b11] hover:bg-slate-800 text-gray-300 hover:text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition border border-[#1f293d] disabled:opacity-50 cursor-pointer"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset</span>
-          </button>
 
           {/* Connection Error Retry */}
           {connectionError && (
@@ -311,6 +323,7 @@ export const SimulationControlWidget: React.FC<SimulationControlWidgetProps> = (
             </button>
           )}
         </div>
+
       </div>
 
       {/* Progress Line on Active Operations */}
