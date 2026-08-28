@@ -55,46 +55,47 @@ export const ResponseActionPanel: React.FC<ResponseActionPanelProps> = ({
   ];
 
   return (
-    <Card className="border-cyan-500/40 bg-gradient-to-r from-[#111827] via-[#161f30] to-[#111827]">
-      <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <ShieldAlert className="w-5 h-5 text-red-400" />
-            <h3 className="text-sm font-black text-gray-100 uppercase tracking-wider">
-              Graduated Response Engine (USP 7)
-            </h3>
-          </div>
-          <p className="text-xs text-gray-300">
-            Recommended response strategy based on multi-stage risk assessment:
-          </p>
-          <div className="mt-2 flex items-center gap-3 font-mono">
-            <span className="text-xs text-gray-400 font-bold uppercase">Risk Level: {riskLevel}</span>
-            <span className="text-sm font-black text-red-400 bg-red-950/80 px-2.5 py-0.5 rounded border border-red-800">
-              RECOMMENDED: {recommendedAction}
-            </span>
-          </div>
-        </div>
+    <div className="snt-panel flex flex-col md:flex-row items-center justify-between gap-6 p-5 relative overflow-hidden">
+      {/* Left accent strip for risk severity */}
+      <div className={`absolute left-0 top-0 bottom-0 w-1 ${riskLevel === 'CRITICAL' ? 'bg-[var(--snt-critical-text)]' : 'bg-[var(--snt-high-text)]'}`} />
 
-        {/* Action Button Suite */}
-        <div className="flex flex-wrap items-center gap-2">
-          {actionButtons.map((btn) => {
-            const Icon = btn.icon;
-            const isRecommended = recommendedAction.includes(btn.type);
-
-            return (
-              <Button
-                key={btn.type}
-                variant={btn.variant}
-                size="sm"
-                icon={<Icon className="w-3.5 h-3.5" />}
-                onClick={() => setActiveModalAction(btn.type)}
-                className={isRecommended ? 'ring-2 ring-red-400 ring-offset-2 ring-offset-[#0b0f17] scale-105' : ''}
-              >
-                {btn.label}
-              </Button>
-            );
-          })}
+      <div className="pl-2">
+        <div className="flex items-center gap-2 mb-1">
+          <ShieldAlert className={`w-4 h-4 ${riskLevel === 'CRITICAL' ? 'text-[var(--snt-critical-text)]' : 'text-[var(--snt-high-text)]'}`} />
+          <h3 className="snt-heading text-sm text-[var(--snt-text-primary)] uppercase tracking-wider">
+            Graduated Response Engine (USP 7)
+          </h3>
         </div>
+        <p className="text-[10px] text-[var(--snt-text-tertiary)] font-['IBM_Plex_Sans',sans-serif] mt-0.5">
+          Recommended response strategy based on multi-stage risk assessment:
+        </p>
+        <div className="mt-3 flex items-center gap-3 font-mono">
+          <span className="text-[9px] text-[var(--snt-text-secondary)] font-bold uppercase tracking-widest border border-[var(--snt-navy-500)] bg-[var(--snt-navy-800)] px-1.5 py-0.5 rounded-sm">Risk Level: {riskLevel}</span>
+          <span className={`text-[10px] font-bold ${riskLevel === 'CRITICAL' ? 'text-[var(--snt-critical-text)] bg-[var(--snt-critical-bg)] border-[var(--snt-critical-border)]' : 'text-[var(--snt-high-text)] bg-[var(--snt-high-bg)] border-[var(--snt-high-border)]'} px-2 py-0.5 rounded-sm border uppercase tracking-wider`}>
+            RECOMMENDED: {recommendedAction}
+          </span>
+        </div>
+      </div>
+
+      {/* Action Button Suite */}
+      <div className="flex flex-wrap items-center gap-2">
+        {actionButtons.map((btn) => {
+          const Icon = btn.icon;
+          const isRecommended = recommendedAction.includes(btn.type);
+
+          return (
+            <Button
+              key={btn.type}
+              variant={btn.variant}
+              size="sm"
+              icon={<Icon className="w-3.5 h-3.5" />}
+              onClick={() => setActiveModalAction(btn.type)}
+              className={isRecommended ? 'relative overflow-hidden before:absolute before:inset-0 before:border-2 before:border-white/20' : ''}
+            >
+              {btn.label}
+            </Button>
+          );
+        })}
       </div>
 
       {/* Confirmation Modal */}
@@ -104,31 +105,31 @@ export const ResponseActionPanel: React.FC<ResponseActionPanelProps> = ({
         title={`Confirm Action: ${activeModalAction} (${userId})`}
       >
         <div className="space-y-4">
-          <div className="p-3 bg-red-950/40 border border-red-500/40 rounded-lg text-xs text-red-300">
+          <div className="p-3 bg-[var(--snt-critical-bg)] border border-[var(--snt-critical-border)] rounded-sm text-xs text-[var(--snt-critical-text)] font-['IBM_Plex_Sans',sans-serif]">
             <strong>Warning:</strong> Enforcing <strong>{activeModalAction}</strong> on identity{' '}
             <strong>{userId}</strong> will immediately propagate to enterprise IAM and SIEM.
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-300 uppercase mb-1">
+            <label className="block text-[10px] font-bold text-[var(--snt-text-tertiary)] uppercase tracking-wider mb-1.5">
               Analyst Intervention Justification / Notes
             </label>
             <textarea
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Provide context for audit log (e.g. Unauthorized beneficiary change detected after-hours)..."
-              className="w-full p-2.5 bg-[#0b0f17] border border-[#1f293d] rounded-lg text-xs text-gray-200 focus:outline-none focus:border-cyan-500"
+              placeholder="Provide context for audit log..."
+              className="snt-input resize-none"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#1f293d]">
-            <Button variant="secondary" size="sm" onClick={() => setActiveModalAction(null)}>
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--snt-navy-500)]">
+            <Button variant="secondary" size="md" onClick={() => setActiveModalAction(null)}>
               Cancel
             </Button>
             <Button
               variant="danger"
-              size="sm"
+              size="md"
               disabled={responseMutation.isPending}
               onClick={handleConfirmAction}
             >
@@ -140,14 +141,14 @@ export const ResponseActionPanel: React.FC<ResponseActionPanelProps> = ({
 
       {/* Action Toast Notification */}
       {toastMessage && (
-        <div className="mt-4 p-3 bg-emerald-950 border border-emerald-500 text-emerald-300 rounded-lg text-xs flex items-center justify-between animate-bounce">
-          <div className="flex items-center gap-2 font-semibold">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            <span>{toastMessage}</span>
+        <div className="absolute inset-0 bg-[var(--snt-navy-750)]/90 backdrop-blur-sm z-10 flex items-center justify-between px-6 border border-[var(--snt-safe-border)] shadow-lg animate-fade-in-up">
+          <div className="flex items-center gap-3 font-semibold text-[var(--snt-safe-text)]">
+            <CheckCircle2 className="w-5 h-5" />
+            <span className="font-['IBM_Plex_Sans',sans-serif] text-sm">{toastMessage}</span>
           </div>
-          <span className="text-[10px] font-mono text-emerald-500">AUDIT RECORDED</span>
+          <span className="text-[10px] font-mono text-[var(--snt-safe-text)] tracking-widest border border-[var(--snt-safe-border)] px-2 py-1 rounded-sm bg-[var(--snt-safe-bg)]">AUDIT RECORDED</span>
         </div>
       )}
-    </Card>
+    </div>
   );
 };

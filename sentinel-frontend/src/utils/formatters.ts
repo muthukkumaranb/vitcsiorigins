@@ -11,6 +11,10 @@ export function formatCurrency(amount: string | number): string {
   return amount;
 }
 
+/**
+ * Returns muted, restrained semantic color classes for risk levels.
+ * No neon colors — financial-security palette only.
+ */
 export function getRiskColorClass(level: RiskLevel): {
   text: string;
   bg: string;
@@ -21,50 +25,53 @@ export function getRiskColorClass(level: RiskLevel): {
   switch (level) {
     case 'CRITICAL':
       return {
-        text: 'text-red-500',
-        bg: 'bg-red-950/40',
-        border: 'border-red-500/50',
-        badge: 'bg-red-500/10 text-red-400 border-red-500/30',
-        bar: 'bg-red-500'
+        text: 'text-[#d44f4f]',
+        bg: 'bg-[#1f0c0c]',
+        border: 'border-[#5c1a1a]',
+        badge: 'bg-[#1f0c0c] text-[#d44f4f] border-[#5c1a1a]',
+        bar: 'bg-[#9b2c2c]'
       };
     case 'HIGH':
       return {
-        text: 'text-orange-500',
-        bg: 'bg-orange-950/40',
-        border: 'border-orange-500/50',
-        badge: 'bg-orange-500/10 text-orange-400 border-orange-500/30',
-        bar: 'bg-orange-500'
+        text: 'text-[#d07040]',
+        bg: 'bg-[#1c0f06]',
+        border: 'border-[#6b3010]',
+        badge: 'bg-[#1c0f06] text-[#d07040] border-[#6b3010]',
+        bar: 'bg-[#9c4a10]'
       };
     case 'MEDIUM':
       return {
-        text: 'text-yellow-500',
-        bg: 'bg-yellow-950/40',
-        border: 'border-yellow-500/50',
-        badge: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
-        bar: 'bg-yellow-500'
+        text: 'text-[#c09030]',
+        bg: 'bg-[#181404]',
+        border: 'border-[#564610]',
+        badge: 'bg-[#181404] text-[#c09030] border-[#564610]',
+        bar: 'bg-[#7a6512]'
       };
     case 'LOW':
     default:
       return {
-        text: 'text-emerald-500',
-        bg: 'bg-emerald-950/40',
-        border: 'border-emerald-500/50',
-        badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-        bar: 'bg-emerald-500'
+        text: 'text-[#3a9460]',
+        bg: 'bg-[#081510]',
+        border: 'border-[#1a4530]',
+        badge: 'bg-[#081510] text-[#3a9460] border-[#1a4530]',
+        bar: 'bg-[#1d5c3a]'
       };
   }
 }
 
+/**
+ * Account type colors — muted, professional
+ */
 export function getAccountTypeColor(accountType: AccountType): string {
   switch (accountType) {
     case 'Administrator':
-      return 'bg-purple-500/10 text-purple-400 border-purple-500/30';
+      return 'bg-[#1a0f2e] text-[#9a7ec8] border-[#4a3068]';
     case 'Service Account':
-      return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30';
+      return 'bg-[#0e1f30] text-[#4a8ab5] border-[#1e4060]';
     case 'Automated System':
-      return 'bg-blue-500/10 text-blue-400 border-blue-500/30';
+      return 'bg-[#0c1a2e] text-[#4a7aa0] border-[#1c3655]';
     case 'Employee':
     default:
-      return 'bg-gray-500/10 text-gray-300 border-gray-500/30';
+      return 'bg-[#1d2d47] text-[#8a9ab5] border-[#253450]';
   }
 }

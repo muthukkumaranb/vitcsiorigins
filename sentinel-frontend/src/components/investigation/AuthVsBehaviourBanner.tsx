@@ -3,44 +3,66 @@ import { ShieldCheck, AlertTriangle } from 'lucide-react';
 
 export const AuthVsBehaviourBanner: React.FC = () => {
   return (
-    <div className="bg-gradient-to-r from-[#111827] via-[#161f30] to-[#111827] border-2 border-red-500/40 rounded-xl p-4 mb-6 shadow-xl relative overflow-hidden">
-      <div className="absolute top-0 right-0 px-3 py-1 bg-red-600 text-white font-mono text-[10px] font-bold tracking-widest rounded-bl-lg uppercase">
-        CORE PRODUCT USP
+    <div className="bg-[var(--snt-navy-750)] border border-[var(--snt-navy-500)] rounded-sm p-4 mb-6 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+      {/* Top red accent strip */}
+      <div className="absolute top-0 left-0 right-0 h-0.5 bg-[var(--snt-critical-text)] opacity-70" />
+
+      <div className="flex items-center gap-4">
+        <div className="p-2 bg-[var(--snt-critical-bg)] text-[var(--snt-critical-text)] rounded-sm border border-[var(--snt-critical-border)]">
+          <AlertTriangle className="w-5 h-5" />
+        </div>
+        <div>
+          <h3 className="snt-heading text-sm uppercase tracking-wide flex items-center gap-2">
+            Authorized Access <span className="text-[var(--snt-text-secondary)]">≠</span> Authorized Behaviour
+            <span className="px-1.5 py-0.5 bg-[var(--snt-critical-bg)] text-[var(--snt-critical-text)] border border-[var(--snt-critical-border)] font-mono text-[9px] rounded-sm tracking-widest ml-2">USP</span>
+          </h3>
+          <p className="text-[11px] text-[var(--snt-text-secondary)] mt-1 max-w-xl leading-relaxed">
+            User possesses valid credentials and legitimate IAM permissions, but the sequence, timing, and behavioral metrics indicate critical anomaly.
+          </p>
+        </div>
       </div>
 
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-red-500/10 text-red-400 rounded-xl border border-red-500/30">
-            <AlertTriangle className="w-6 h-6 animate-pulse-live" />
-          </div>
+      {/* 4-Step Flow */}
+      <div className="flex items-center shrink-0 bg-[var(--snt-navy-800)] p-2 rounded-sm border border-[var(--snt-navy-500)]">
+        {/* Step 1 */}
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--snt-safe-bg)] border border-[var(--snt-safe-border)] rounded-sm">
+          <ShieldCheck className="w-3.5 h-3.5 text-[var(--snt-safe-text)]" />
           <div>
-            <h3 className="text-sm font-black text-gray-100 uppercase tracking-wider">
-              Authorized Access ≠ Authorized Behaviour
-            </h3>
-            <p className="text-xs text-gray-300 mt-0.5">
-              The user possesses valid credentials and legitimate IAM permissions, but the sequence, timing, and monetary metrics indicate critical insider misuse.
-            </p>
+            <div className="text-[8px] font-bold text-[var(--snt-safe-text)] opacity-70 uppercase tracking-widest">ACCESS</div>
+            <div className="text-[10px] font-bold text-[var(--snt-safe-text)] font-mono tracking-wide">✓ AUTHORIZED</div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4 shrink-0 bg-[#0b0f17]/80 p-2.5 rounded-lg border border-[#1f293d]">
-          {/* Access Box */}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-950/60 border border-emerald-500/40 rounded">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <div>
-              <div className="text-[9px] font-bold text-gray-400 uppercase">ACCESS</div>
-              <div className="text-xs font-black text-emerald-400">✓ AUTHORIZED</div>
-            </div>
+        <div className="w-4 h-[1px] bg-[var(--snt-navy-400)] mx-1" />
+
+        {/* Step 2 */}
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--snt-medium-bg)] border border-[var(--snt-medium-border)] rounded-sm">
+          <div>
+            <div className="text-[8px] font-bold text-[var(--snt-medium-text)] opacity-70 uppercase tracking-widest">BEHAVIOUR</div>
+            <div className="text-[10px] font-bold text-[var(--snt-medium-text)] font-mono tracking-wide">⚠ DEVIATING</div>
           </div>
+        </div>
 
-          <span className="text-gray-500 font-extrabold text-lg">+</span>
+        <div className="w-4 h-[1px] bg-[var(--snt-navy-400)] mx-1" />
 
-          {/* Behaviour Box */}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-red-950/60 border border-red-500/40 rounded">
-            <AlertTriangle className="w-4 h-4 text-red-400" />
-            <div>
-              <div className="text-[9px] font-bold text-gray-400 uppercase">BEHAVIOUR</div>
-              <div className="text-xs font-black text-red-400">⚠ DEVIANT / ANOMALOUS</div>
+        {/* Step 3 */}
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--snt-high-bg)] border border-[var(--snt-high-border)] rounded-sm">
+          <div>
+            <div className="text-[8px] font-bold text-[var(--snt-high-text)] opacity-70 uppercase tracking-widest">CONTEXT</div>
+            <div className="text-[10px] font-bold text-[var(--snt-high-text)] font-mono tracking-wide">HIGH RISK</div>
+          </div>
+        </div>
+
+        <div className="w-4 h-[1px] bg-[var(--snt-critical-border)] mx-1" />
+
+        {/* Step 4 */}
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--snt-critical-bg)] border border-[var(--snt-critical-border)] rounded-sm relative overflow-hidden">
+          <div className="absolute inset-0 border border-[var(--snt-critical-text)] opacity-20 pointer-events-none" />
+          <div>
+            <div className="text-[8px] font-bold text-[var(--snt-critical-text)] opacity-70 uppercase tracking-widest">RESPONSE</div>
+            <div className="text-[10px] font-bold text-[var(--snt-critical-text)] font-mono tracking-wide flex items-center gap-1">
+              <span className="w-1.5 h-1.5 bg-[var(--snt-critical-text)] rounded-full animate-pulse-live" />
+              SUSPEND + ESCALATE
             </div>
           </div>
         </div>

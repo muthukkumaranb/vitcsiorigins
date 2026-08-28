@@ -25,6 +25,14 @@ export function useIdentitiesData() {
   });
 }
 
+export function useEventsData(userId?: string) {
+  return useQuery({
+    queryKey: ['events', userId],
+    queryFn: () => securityService.getEvents(userId),
+    refetchInterval: 5000
+  });
+}
+
 export function useIdentityData(userId: string) {
   return useQuery({
     queryKey: ['identity', userId],

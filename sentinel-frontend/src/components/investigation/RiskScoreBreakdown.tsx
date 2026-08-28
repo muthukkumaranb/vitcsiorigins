@@ -2,7 +2,6 @@ import React from 'react';
 import { Card } from '../common/Card';
 import { RiskAssessment } from '../../types/security';
 import { ShieldAlert } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 interface RiskScoreBreakdownProps {
   risk: RiskAssessment;
@@ -11,62 +10,71 @@ interface RiskScoreBreakdownProps {
 export const RiskScoreBreakdown: React.FC<RiskScoreBreakdownProps> = ({ risk }) => {
 
   return (
-    <Card className="h-full border-red-500/30 bg-gradient-to-b from-[#111827] to-[#161f30]">
-      <div className="flex items-center justify-between pb-3 border-b border-[#1f293d] mb-4">
-        <h3 className="text-sm font-bold text-gray-100 uppercase tracking-wider flex items-center gap-2">
-          <ShieldAlert className="w-4 h-4 text-red-400" />
+    <Card className="h-full flex flex-col">
+      <div className="flex items-center justify-between pb-3 border-b border-[var(--snt-navy-500)] mb-4">
+        <h3 className="snt-heading text-sm text-[var(--snt-text-primary)] uppercase flex items-center gap-2">
+          <ShieldAlert className="w-4 h-4 text-[var(--snt-critical-text)]" />
           Explainable Risk Decomposition (USP 6)
         </h3>
-        <span className="text-[10px] text-gray-400 font-mono">ISOLATION FOREST v1.0</span>
+        <span className="text-[9px] text-[var(--snt-text-tertiary)] font-mono border border-[var(--snt-navy-500)] px-1.5 py-0.5 rounded-sm">ISOLATION FOREST v1.0</span>
       </div>
 
-      {/* Main Score Visual */}
-      <div className="flex items-center justify-between p-4 bg-[#0b0f17] border border-red-500/40 rounded-xl mb-5">
-        <div>
-          <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Overall Risk Score</div>
-          <div className="text-4xl font-black font-mono text-red-500 mt-1">
-            {risk.risk_score}
-            <span className="text-sm text-gray-500 font-normal"> / 100</span>
-          </div>
-          <div className="text-xs font-bold text-red-400 mt-1 flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
-            <span>LEVEL: {risk.risk_level}</span>
+      {/* Main Score Visual - Instrument Style */}
+      <div className="flex items-stretch gap-px bg-[var(--snt-navy-500)] mb-6 border border-[var(--snt-navy-500)] rounded-sm overflow-hidden">
+        
+        {/* Risk Score */}
+        <div className="flex-1 bg-[var(--snt-navy-800)] p-4 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 h-full bg-[var(--snt-critical-text)]" />
+          <div className="pl-2">
+            <div className="snt-instrument-label">Composite Risk Score</div>
+            <div className="text-4xl font-light font-['IBM_Plex_Mono',monospace] text-[var(--snt-critical-text)] mt-1">
+              {risk.risk_score}
+              <span className="text-sm text-[var(--snt-text-tertiary)] font-normal ml-1">/ 100</span>
+            </div>
+            <div className="text-[10px] font-bold text-[var(--snt-critical-text)] mt-2 uppercase tracking-widest flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-sm bg-[var(--snt-critical-text)]" />
+              {risk.risk_level}
+            </div>
           </div>
         </div>
 
-        {/* Secondary Trust Score Box */}
-        <div className="text-right border-l border-[#1f293d] pl-5">
-          <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Behavioural Trust</div>
-          <div className="text-3xl font-black font-mono text-cyan-400 mt-1">
-            {risk.trust_score}
-            <span className="text-xs text-gray-500 font-normal"> / 100</span>
+        {/* Trust Score */}
+        <div className="flex-1 bg-[var(--snt-navy-800)] p-4 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 h-full bg-[var(--snt-accent)]" />
+          <div className="pl-2">
+            <div className="snt-instrument-label">Behavioural Trust</div>
+            <div className="text-3xl font-light font-['IBM_Plex_Mono',monospace] text-[var(--snt-text-secondary)] mt-2">
+              {risk.trust_score}
+              <span className="text-xs text-[var(--snt-text-tertiary)] font-normal ml-1">/ 100</span>
+            </div>
+            <div className="text-[10px] font-bold text-[var(--snt-high-text)] mt-2 uppercase tracking-widest">
+              DEGRADED BASELINE
+            </div>
           </div>
-          <div className="text-[11px] text-amber-400 font-semibold mt-1">DEGRADED BASELINE</div>
         </div>
       </div>
 
       {/* Risk Factors Breakdown Bars */}
-      <div className="space-y-3">
-        <div className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center justify-between">
-          <span>Risk Contributors ("WHY IS IT RISKY?")</span>
-          <span className="text-gray-500 font-normal">Points Added</span>
+      <div className="space-y-3 flex-1">
+        <div className="text-[10px] font-bold text-[var(--snt-text-tertiary)] uppercase tracking-wider flex items-center justify-between pb-1 border-b border-[var(--snt-navy-500)]">
+          <span>Risk Contributors</span>
+          <span>Score Delta</span>
         </div>
 
         {risk.risk_factors.map((factor, i) => (
           <div key={i} className="space-y-1">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-gray-200">{factor.name}</span>
-              <span className="font-mono font-bold text-red-400">+{factor.score} pts</span>
+              <span className="font-semibold text-[var(--snt-text-primary)]">{factor.name}</span>
+              <span className="font-mono font-bold text-[var(--snt-critical-text)] text-[10px]">+{factor.score}</span>
             </div>
-            <div className="w-full h-2 bg-[#0b0f17] rounded-full overflow-hidden border border-[#1f293d]">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${(factor.score / 30) * 100}%` }}
-                transition={{ duration: 0.6, delay: i * 0.1 }}
-                className="h-full bg-gradient-to-r from-orange-500 to-red-500 rounded-full"
+            {/* Restrained horizontal bar */}
+            <div className="w-full h-1.5 bg-[var(--snt-navy-950)] rounded-sm overflow-hidden border border-[var(--snt-navy-500)]">
+              <div
+                style={{ width: `${(factor.score / 30) * 100}%` }}
+                className="h-full bg-[var(--snt-critical-text)] rounded-r-sm"
               />
             </div>
-            <p className="text-[10px] text-gray-400">{factor.description}</p>
+            <p className="text-[10px] text-[var(--snt-text-tertiary)] leading-tight">{factor.description}</p>
           </div>
         ))}
       </div>

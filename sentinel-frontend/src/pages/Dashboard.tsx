@@ -1,94 +1,88 @@
 import React from 'react';
+import { useDashboardData, useIdentitiesData, useEventsData } from '../hooks/useSecurityData';
 import { KpiCard } from '../components/dashboard/KpiCard';
 import { TrustLandscapeChart } from '../components/dashboard/TrustLandscapeChart';
 import { ThreatOverview } from '../components/dashboard/ThreatOverview';
-import { TopCriticalIdentities } from '../components/dashboard/TopCriticalIdentities';
 import { LiveBehaviourStream } from '../components/dashboard/LiveBehaviourStream';
-import { LoadingSkeleton } from '../components/common/LoadingSkeleton';
-import { ErrorState } from '../components/common/ErrorState';
-import { useDashboardData, useIdentitiesData } from '../hooks/useSecurityData';
-import { useLiveBehaviourStream } from '../hooks/usePolling';
-import { Activity, ShieldAlert, Users, Layers } from 'lucide-react';
+import { TopCriticalIdentities } from '../components/dashboard/TopCriticalIdentities';
+import { ShieldCheck, Activity, Users, AlertTriangle } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
-  const dashboardQuery = useDashboardData();
-  const identitiesQuery = useIdentitiesData();
-  const { stream } = useLiveBehaviourStream();
+  const { data: dashboardData, isLoading: isDashboardLoading } = useDashboardData();
+  const { data: identities, isLoading: isIdentitiesLoading } = useIdentitiesData();
+  const { data: events, isLoading: isEventsLoading } = useEventsData();
 
-  if (dashboardQuery.isLoading || identitiesQuery.isLoading) {
-    return <LoadingSkeleton rows={6} />;
+  if (isDashboardLoading || !dashboardData || isIdentitiesLoading || isEventsLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-2 border-[var(--snt-accent)] border-t-transparent rounded-full animate-spin"></div>
+          <div className="snt-label text-[var(--snt-accent)]">INITIALIZING TELEMETRY...</div>
+        </div>
+      </div>
+    );
   }
-
-  if (dashboardQuery.isError || !dashboardQuery.data) {
-    return <ErrorState onRetry={() => dashboardQuery.refetch()} />;
-  }
-
-  const metrics = dashboardQuery.data;
 
   return (
-    <div className="space-y-6">
-      {/* Top Header Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-[#1f293d] pb-4">
+    <div className="max-w-7xl mx-auto space-y-6 fade-in">
+      
+      {/* Page Header */}
+      <div className="flex items-end justify-between pb-4 border-b border-[var(--snt-navy-500)]">
         <div>
-          <h1 className="text-xl font-black tracking-tight text-gray-100 uppercase">
-            COMMAND CENTER — Security Posture
-          </h1>
-          <p className="text-xs text-gray-400">
-            Real-time privileged environment behavior & trust scoring telemetry
+          <h1 className="text-2xl font-bold text-[var(--snt-text-primary)] font-['Space_Grotesk',sans-serif] tracking-tight">Security Posture Dashboard</h1>
+          <p className="text-xs text-[var(--snt-text-secondary)] mt-1 font-['IBM_Plex_Sans',sans-serif]">
+            Continuous trust evaluation across {dashboardData.privileged_identities.toLocaleString()} privileged identities.
           </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="px-3 py-1 bg-[var(--snt-navy-750)] border border-[var(--snt-navy-500)] rounded-sm text-[10px] uppercase font-bold tracking-wider flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[var(--snt-safe-text)] animate-pulse-live"></span>
+            All Systems Nominal
+          </div>
         </div>
       </div>
 
-      {/* Section 8: Security Posture KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* KPI Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
-          title="BEHAVIOURAL TRUST"
-          value={`${metrics.behavioural_trust_score} / 100`}
-          subtitle="Enterprise Trust Score"
-          trend={metrics.behavioural_trust_trend}
-          icon={<Activity className="w-5 h-5 text-cyan-400" />}
+          title="Total Privileged Identities"
+          value={dashboardData.privileged_identities.toLocaleString()}
+          trend={dashboardData.privileged_identities_trend}
+          icon={<Users />}
           accentColor="cyan"
         />
-
         <KpiCard
-          title="ACTIVE THREATS"
-          value={metrics.active_threats}
-          subtitle="Open Anomaly Incidents"
-          trend={metrics.active_threats_trend}
-          icon={<ShieldAlert className="w-5 h-5 text-red-400" />}
+          title="Behavioural Trust Score"
+          value={`${dashboardData.behavioural_trust_score} / 100`}
+          trend={dashboardData.behavioural_trust_trend}
+          icon={<ShieldCheck />}
+          accentColor="cyan"
+        />
+        <KpiCard
+          title="Active Threats"
+          value={dashboardData.active_threats}
+          trend={dashboardData.active_threats_trend}
+          icon={<AlertTriangle />}
           accentColor="red"
         />
-
         <KpiCard
-          title="PRIVILEGED IDENTITIES"
-          value={metrics.privileged_identities}
-          subtitle="Monitored High-Trust Accounts"
-          trend={metrics.privileged_identities_trend}
-          icon={<Users className="w-5 h-5 text-amber-400" />}
-          accentColor="amber"
-        />
-
-        <KpiCard
-          title="EVENTS ANALYZED"
-          value={metrics.events_analyzed.toLocaleString()}
-          subtitle="Scored Telemetry Log Rows"
-          trend={metrics.events_analyzed_trend}
-          icon={<Layers className="w-5 h-5 text-emerald-400" />}
+          title="Events Analyzed"
+          value={dashboardData.events_analyzed.toLocaleString()}
+          trend={dashboardData.events_analyzed_trend}
+          icon={<Activity />}
           accentColor="emerald"
         />
       </div>
 
-      {/* Main Charts Row: Section 9 Trust Landscape + Section 10 Threat Overview */}
+      {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <TrustLandscapeChart data={metrics.trust_landscape} />
-        <ThreatOverview counts={metrics.threat_severity_counts} />
+        <TrustLandscapeChart data={dashboardData.trust_landscape} />
+        <ThreatOverview counts={dashboardData.threat_severity_counts} />
+        <TopCriticalIdentities identities={identities || []} />
+        <LiveBehaviourStream events={events || []} />
       </div>
 
-      {/* Secondary Row: Section 11 Top Critical Identities + Section 12 Live Stream */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <TopCriticalIdentities identities={identitiesQuery.data || []} />
-        <LiveBehaviourStream events={stream} />
-      </div>
     </div>
   );
 };
+

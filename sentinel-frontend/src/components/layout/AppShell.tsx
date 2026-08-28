@@ -9,7 +9,14 @@ export const AppShell: React.FC = () => {
   const { lastUpdated } = useLiveBehaviourStream();
 
   return (
-    <div className="flex min-h-screen bg-[#0b0f17] text-gray-100 font-sans antialiased">
+    <div
+      className="flex min-h-screen antialiased"
+      style={{
+        backgroundColor: 'var(--snt-navy-900)',
+        color: 'var(--snt-text-primary)',
+        fontFamily: "'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif"
+      }}
+    >
       {/* Sidebar */}
       <Sidebar />
 
@@ -17,7 +24,10 @@ export const AppShell: React.FC = () => {
       <div className="flex-1 flex flex-col min-w-0">
         <TopHeader lastUpdated={lastUpdated} />
         <Breadcrumb />
-        <main className="flex-1 p-6 overflow-y-auto">
+        <main
+          className="flex-1 p-6 overflow-y-auto"
+          style={{ backgroundColor: 'var(--snt-navy-900)' }}
+        >
           <Outlet />
         </main>
       </div>

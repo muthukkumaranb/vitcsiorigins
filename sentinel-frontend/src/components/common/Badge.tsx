@@ -18,7 +18,7 @@ export const Badge: React.FC<BadgeProps> = ({
   accountType,
   className
 }) => {
-  let badgeStyle = 'bg-gray-800 text-gray-300 border-gray-700';
+  let badgeStyle = 'bg-[#1d2d47] text-[#8a9ab5] border-[#253450]';
 
   if (variant === 'risk' && riskLevel) {
     const colors = getRiskColorClass(riskLevel);
@@ -30,7 +30,7 @@ export const Badge: React.FC<BadgeProps> = ({
   return (
     <span
       className={clsx(
-        'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold uppercase tracking-wider border',
+        'inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[10px] font-semibold uppercase tracking-[0.06em] border font-[\'IBM_Plex_Sans\',sans-serif]',
         badgeStyle,
         className
       )}

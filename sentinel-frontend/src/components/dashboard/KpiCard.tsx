@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card } from '../common/Card';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -18,56 +17,61 @@ export const KpiCard: React.FC<KpiCardProps> = ({
   value,
   subtitle,
   trend,
-  trendLabel = 'vs previous 24h',
+  trendLabel = 'vs prev 24h',
   icon,
   accentColor = 'cyan'
 }) => {
-  const accentBorderMap = {
-    cyan: 'border-l-4 border-l-cyan-500',
-    red: 'border-l-4 border-l-red-500',
-    amber: 'border-l-4 border-l-amber-500',
-    emerald: 'border-l-4 border-l-emerald-500'
+  // Map accent to new muted palette tokens
+  const colorMap = {
+    cyan: { text: 'text-[var(--snt-accent-light)]', bg: 'bg-[var(--snt-accent-dim)]', border: 'border-[var(--snt-accent)]' },
+    red: { text: 'text-[var(--snt-critical-text)]', bg: 'bg-[var(--snt-critical-bg)]', border: 'border-[var(--snt-critical-border)]' },
+    amber: { text: 'text-[var(--snt-high-text)]', bg: 'bg-[var(--snt-high-bg)]', border: 'border-[var(--snt-high-border)]' },
+    emerald: { text: 'text-[var(--snt-safe-text)]', bg: 'bg-[var(--snt-safe-bg)]', border: 'border-[var(--snt-safe-border)]' }
   };
 
+  const style = colorMap[accentColor];
   const isPositive = trend && trend > 0;
 
   return (
-    <Card className={clsx('relative overflow-hidden', accentBorderMap[accentColor])}>
+    <div className="snt-panel flex flex-col justify-between p-4 relative overflow-hidden group">
+      {/* Top accent strip instead of full left border */}
+      <div className={clsx('absolute top-0 left-0 right-0 h-0.5 opacity-50', style.bg)} />
+
       <div className="flex items-start justify-between">
         <div>
-          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">{title}</h3>
-          <div className="text-3xl font-extrabold tracking-tight text-gray-100 mt-2 font-mono">
+          <h3 className="snt-label">{title}</h3>
+          <div className="text-2xl font-semibold tracking-tight text-[var(--snt-text-primary)] mt-1.5 font-['IBM_Plex_Mono',monospace]">
             {value}
           </div>
-          {subtitle && <p className="text-xs text-gray-400 mt-1">{subtitle}</p>}
+          {subtitle && <p className="text-[10px] text-[var(--snt-text-tertiary)] mt-0.5">{subtitle}</p>}
         </div>
         {icon && (
-          <div className="p-2.5 bg-[#1f293d]/60 rounded-lg text-gray-300 border border-[#1f293d]">
-            {icon}
+          <div className={clsx('p-1.5 rounded-sm border opacity-70 group-hover:opacity-100 transition-opacity', style.bg, style.border, style.text)}>
+            {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-4 h-4' })}
           </div>
         )}
       </div>
 
       {trend !== undefined && (
-        <div className="mt-4 pt-3 border-t border-[#1f293d]/60 flex items-center gap-2 text-xs">
+        <div className="mt-4 pt-3 border-t border-[var(--snt-navy-500)] flex items-center gap-2 text-[10px]">
           <span
             className={clsx(
-              'inline-flex items-center gap-1 font-semibold px-2 py-0.5 rounded text-[11px]',
+              'inline-flex items-center gap-0.5 font-semibold px-1.5 py-0.5 rounded-sm font-mono',
               isPositive
-                ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800'
-                : 'bg-red-950/60 text-red-400 border border-red-800'
+                ? 'bg-[var(--snt-safe-bg)] text-[var(--snt-safe-text)] border border-[var(--snt-safe-border)]'
+                : 'bg-[var(--snt-critical-bg)] text-[var(--snt-critical-text)] border border-[var(--snt-critical-border)]'
             )}
           >
             {isPositive ? (
-              <TrendingUp className="w-3.5 h-3.5" />
+              <TrendingUp className="w-3 h-3" />
             ) : (
-              <TrendingDown className="w-3.5 h-3.5" />
+              <TrendingDown className="w-3 h-3" />
             )}
             {isPositive ? `+${trend}%` : `${trend}%`}
           </span>
-          <span className="text-gray-400">{trendLabel}</span>
+          <span className="text-[var(--snt-text-tertiary)] uppercase tracking-wider">{trendLabel}</span>
         </div>
       )}
-    </Card>
+    </div>
   );
 };

@@ -52,36 +52,61 @@ export const Sidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="w-64 bg-[#0b0f17] border-r border-[#1f293d] flex flex-col h-screen sticky top-0 shrink-0 select-none">
+    <aside
+      className="w-64 border-r flex flex-col h-screen sticky top-0 shrink-0 select-none"
+      style={{
+        backgroundColor: 'var(--snt-navy-800)',
+        borderColor: 'var(--snt-navy-500)'
+      }}
+    >
       {/* Brand Header */}
-      <div className="p-5 border-b border-[#1f293d] flex items-center gap-3">
-        <div className="p-2 bg-cyan-500/10 border border-cyan-500/30 rounded-lg text-cyan-400">
-          <Shield className="w-6 h-6" />
+      <div className="p-5 border-b flex items-center gap-3" style={{ borderColor: 'var(--snt-navy-500)' }}>
+        <div className="p-2 border rounded-sm" style={{ backgroundColor: 'var(--snt-navy-700)', borderColor: 'var(--snt-navy-400)', color: 'var(--snt-text-primary)' }}>
+          <Shield className="w-5 h-5" />
         </div>
         <div>
-          <h1 className="text-lg font-bold tracking-wider text-gray-100 flex items-center gap-1.5">
+          <h1 className="text-lg tracking-wide flex items-center gap-1.5" style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, color: 'var(--snt-text-primary)' }}>
             SENTINEL
-            <span className="text-[10px] px-1.5 py-0.5 bg-cyan-950 text-cyan-400 border border-cyan-800 rounded font-semibold">
+            <span
+              className="text-[9px] px-1.5 py-0.5 border rounded-sm tracking-wider uppercase font-mono"
+              style={{
+                backgroundColor: 'var(--snt-navy-700)',
+                color: 'var(--snt-text-secondary)',
+                borderColor: 'var(--snt-navy-500)'
+              }}
+            >
               v2.4
             </span>
           </h1>
-          <p className="text-[11px] text-gray-400 font-medium tracking-tight">
-            Continuous Privileged Trust
+          <p className="text-[10px] tracking-widest uppercase font-semibold" style={{ color: 'var(--snt-text-tertiary)', fontFamily: "'IBM Plex Sans', sans-serif" }}>
+            Continuous Trust
           </p>
         </div>
       </div>
 
       {/* Quick Search Shortcut */}
-      <div className="px-4 py-3 border-b border-[#1f293d]/50">
+      <div className="px-4 py-3 border-b" style={{ borderColor: 'rgba(37, 52, 80, 0.5)' }}>
         <NavLink
           to="/investigation/U0345"
-          className="flex items-center justify-between px-3 py-1.5 text-xs bg-[#111827] border border-[#1f293d] text-gray-400 rounded-lg hover:border-cyan-500/40 hover:text-gray-200 transition-colors"
+          className="flex items-center justify-between px-3 py-1.5 text-xs border rounded-sm transition-colors group"
+          style={{
+            backgroundColor: 'var(--snt-navy-900)',
+            borderColor: 'var(--snt-navy-500)',
+            color: 'var(--snt-text-secondary)'
+          }}
         >
-          <span className="flex items-center gap-2">
-            <Search className="w-3.5 h-3.5 text-cyan-400" />
+          <span className="flex items-center gap-2 group-hover:text-[var(--snt-text-primary)] transition-colors">
+            <Search className="w-3.5 h-3.5 text-[var(--snt-text-tertiary)] group-hover:text-[var(--snt-text-secondary)] transition-colors" />
             Investigate U0345...
           </span>
-          <kbd className="px-1.5 py-0.5 text-[10px] bg-[#1f293d] text-gray-300 rounded font-mono">
+          <kbd
+            className="px-1.5 py-0.5 text-[10px] border rounded-sm font-mono"
+            style={{
+              backgroundColor: 'var(--snt-navy-750)',
+              borderColor: 'var(--snt-navy-400)',
+              color: 'var(--snt-text-mono)'
+            }}
+          >
             ⌘K
           </kbd>
         </NavLink>
@@ -91,7 +116,7 @@ export const Sidebar: React.FC = () => {
       <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
         {navSections.map((section) => (
           <div key={section.title} className="space-y-1">
-            <h3 className="px-3 text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-1.5">
+            <h3 className="px-3 text-[10px] font-bold tracking-widest uppercase mb-1.5" style={{ color: 'var(--snt-text-tertiary)', fontFamily: "'IBM Plex Sans', sans-serif" }}>
               {section.title}
             </h3>
             {section.items.map((item) => {
@@ -105,29 +130,35 @@ export const Sidebar: React.FC = () => {
                   key={item.path}
                   to={item.path}
                   className={clsx(
-                    'flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all group',
-                    isActive
-                      ? 'bg-cyan-950/50 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-950'
-                      : 'text-gray-400 hover:text-gray-200 hover:bg-[#111827] hover:border hover:border-[#1f293d]'
+                    'snt-nav-item',
+                    isActive ? 'snt-nav-item-active' : ''
                   )}
                 >
                   <div className="flex items-center gap-2.5">
                     <Icon
                       className={clsx(
                         'w-4 h-4 transition-colors',
-                        isActive ? 'text-cyan-400' : 'text-gray-500 group-hover:text-gray-300'
+                        isActive ? 'text-[var(--snt-accent-light)]' : 'text-[var(--snt-navy-200)] group-hover:text-[var(--snt-text-secondary)]'
                       )}
                     />
                     <span>{item.label}</span>
                   </div>
                   {item.badge && (
                     <span
-                      className={clsx(
-                        'px-1.5 py-0.5 rounded text-[10px] font-semibold border',
+                      className="px-1.5 py-0.5 rounded-sm text-[9px] font-bold tracking-wider border font-mono uppercase"
+                      style={
                         item.badge.includes('CRITICAL')
-                          ? 'bg-red-950/60 text-red-400 border-red-800'
-                          : 'bg-cyan-950/60 text-cyan-400 border-cyan-800'
-                      )}
+                          ? {
+                              backgroundColor: 'var(--snt-critical-bg)',
+                              color: 'var(--snt-critical-text)',
+                              borderColor: 'var(--snt-critical-border)'
+                            }
+                          : {
+                              backgroundColor: 'var(--snt-navy-700)',
+                              color: 'var(--snt-text-mono)',
+                              borderColor: 'var(--snt-navy-500)'
+                            }
+                      }
                     >
                       {item.badge}
                     </span>
@@ -140,10 +171,10 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* Footer info */}
-      <div className="p-4 border-t border-[#1f293d] bg-[#080b11]">
-        <div className="flex items-center justify-between text-[11px] text-gray-400">
-          <span>Problem Statement 9</span>
-          <span className="text-cyan-400 font-semibold">CSI ORIGIN 2026</span>
+      <div className="p-4 border-t" style={{ borderColor: 'var(--snt-navy-500)', backgroundColor: 'var(--snt-navy-950)' }}>
+        <div className="flex items-center justify-between text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--snt-text-tertiary)' }}>
+          <span>Prob. Stmt. 9</span>
+          <span style={{ color: 'var(--snt-text-secondary)' }}>CSI ORIGIN 2026</span>
         </div>
       </div>
     </aside>

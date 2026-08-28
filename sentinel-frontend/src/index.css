@@ -1,91 +1,616 @@
 @import "tailwindcss";
 
+/* ============================================================
+   SENTINEL — PRIVILEGED TRUST INTELLIGENCE
+   Design System v3.0 — Navy/Cream Financial Security Platform
+   ============================================================ */
+
 @layer base {
   :root {
-    --bg-main: #0b0f17;
-    --bg-card: #111827;
-    --bg-card-hover: #161f30;
-    --border-color: #1f293d;
-    --text-primary: #f3f4f6;
-    --text-secondary: #9ca3af;
-    --text-muted: #6b7280;
+    /* ── SENTINEL NAVY PALETTE ─────────────────────────────── */
+    --snt-navy-950:  #080e1a;   /* deepest background */
+    --snt-navy-900:  #0d1420;   /* primary background */
+    --snt-navy-800:  #111b2d;   /* sidebar, header */
+    --snt-navy-750:  #142032;   /* card surface */
+    --snt-navy-700:  #172438;   /* elevated surface */
+    --snt-navy-600:  #1d2d47;   /* hover surface */
+    --snt-navy-500:  #253450;   /* primary border */
+    --snt-navy-400:  #304666;   /* hover border */
+    --snt-navy-300:  #3d5a80;   /* muted accent border */
+    --snt-navy-200:  #4a6d96;   /* inactive icon */
 
-    --color-critical: #ef4444;
-    --color-high: #f97316;
-    --color-medium: #f59e0b;
-    --color-low: #10b981;
-    --color-info: #06b6d4;
+    /* ── CREAM / IVORY ANALYTICAL SURFACES ─────────────────── */
+    --snt-cream-50:  #faf8f4;   /* lightest cream */
+    --snt-cream-100: #f5f1eb;   /* light analytical surface */
+    --snt-cream-200: #ece6db;   /* cream border */
+    --snt-cream-300: #d8cfbf;   /* slightly darker cream */
+    --snt-cream-text: #1a2840;  /* navy text on cream */
+    --snt-cream-muted: #4a5a72; /* muted text on cream */
+
+    /* ── TEXT COLORS ────────────────────────────────────────── */
+    --snt-text-primary:   #dde4ef;  /* warm white — primary text on dark */
+    --snt-text-secondary: #8a9ab5;  /* muted slate blue-gray */
+    --snt-text-tertiary:  #566480;  /* tertiary / labels */
+    --snt-text-mono:      #a8bdd4;  /* monospace technical text */
+
+    /* ── ACCENT (MUTED STEEL BLUE) ──────────────────────────── */
+    --snt-accent:       #4f7099;  /* primary accent — muted steel blue */
+    --snt-accent-light: #638fb8;  /* lighter accent */
+    --snt-accent-dim:   #2d4a68;  /* dimmed accent for backgrounds */
+
+    /* ── SEMANTIC RISK COLORS (RESTRAINED, NOT NEON) ─────────── */
+    --snt-critical:      #9b2c2c;  /* deep restrained red */
+    --snt-critical-bg:   #1f0c0c;  /* critical background */
+    --snt-critical-border: #5c1a1a; /* critical border */
+    --snt-critical-text:  #d44f4f;  /* critical readable text */
+
+    --snt-high:       #9c4a10;   /* muted amber-orange */
+    --snt-high-bg:    #1c0f06;
+    --snt-high-border: #6b3010;
+    --snt-high-text:  #d07040;
+
+    --snt-medium:     #7a6512;   /* muted gold */
+    --snt-medium-bg:  #181404;
+    --snt-medium-border: #564610;
+    --snt-medium-text: #c09030;
+
+    --snt-safe:       #1d5c3a;   /* muted green */
+    --snt-safe-bg:    #081510;
+    --snt-safe-border: #1a4530;
+    --snt-safe-text:  #3a9460;
+
+    --snt-info:       #1e4a72;   /* muted blue */
+    --snt-info-text:  #4a8ab5;
+
+    /* ── LEGACY COMPATIBILITY ALIASES ──────────────────────── */
+    --bg-main:       var(--snt-navy-900);
+    --bg-card:       var(--snt-navy-750);
+    --bg-card-hover: var(--snt-navy-600);
+    --border-color:  var(--snt-navy-500);
+    --text-primary:  var(--snt-text-primary);
+    --text-secondary: var(--snt-text-secondary);
+    --text-muted:    var(--snt-text-tertiary);
+
+    --color-critical: var(--snt-critical-text);
+    --color-high:     var(--snt-high-text);
+    --color-medium:   var(--snt-medium-text);
+    --color-low:      var(--snt-safe-text);
+    --color-info:     var(--snt-info-text);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   body {
-    background-color: var(--bg-main);
-    color: var(--text-primary);
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background-color: var(--snt-navy-900);
+    color: var(--snt-text-primary);
+    font-family: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
     overflow-x: hidden;
   }
 }
 
-/* Custom SOC Utilities & Glassmorphism */
+/* ============================================================
+   SENTINEL COMPONENT UTILITIES
+   ============================================================ */
+
+/* ── CARD SURFACES ──────────────────────────────────────────── */
+
+.snt-panel {
+  background-color: var(--snt-navy-750);
+  border: 1px solid var(--snt-navy-500);
+  border-radius: 2px;
+}
+
+.snt-panel-elevated {
+  background-color: var(--snt-navy-700);
+  border: 1px solid var(--snt-navy-400);
+  border-radius: 2px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Cream analytical surface — for investigation/evidence areas */
+.snt-panel-cream {
+  background-color: var(--snt-cream-100);
+  border: 1px solid var(--snt-cream-200);
+  border-radius: 2px;
+  color: var(--snt-cream-text);
+}
+
+.snt-panel-hover {
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.snt-panel-hover:hover {
+  border-color: var(--snt-navy-400);
+  background-color: var(--snt-navy-600);
+}
+
+/* ── SOC LEGACY CARD (updated, no glow) ─────────────────────── */
 .soc-card {
-  background-color: #111827;
-  border: 1px solid #1f293d;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  background-color: var(--snt-navy-750);
+  border: 1px solid var(--snt-navy-500);
+  border-radius: 2px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
 }
 
 .soc-card-hover {
-  transition: all 0.2s ease-in-out;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 .soc-card-hover:hover {
-  border-color: #374151;
-  background-color: #161f30;
+  border-color: var(--snt-navy-400);
+  background-color: var(--snt-navy-600);
 }
 
+/* Glassmorphism — REMOVED. Use snt-panel instead. */
 .soc-glass {
-  background: rgba(17, 24, 39, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(31, 41, 61, 0.6);
+  background: var(--snt-navy-800);
+  border: 1px solid var(--snt-navy-500);
 }
 
-/* Severity Glow Utilities */
+/* ── TYPOGRAPHY SYSTEM ──────────────────────────────────────── */
+
+.snt-heading {
+  font-family: 'Space Grotesk', 'IBM Plex Sans', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--snt-text-primary);
+}
+
+.snt-label {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--snt-text-secondary);
+}
+
+.snt-mono {
+  font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--snt-text-mono);
+}
+
+.snt-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 600;
+  color: var(--snt-text-primary);
+}
+
+/* ── INSTRUMENT DISPLAYS ────────────────────────────────────── */
+
+.snt-instrument-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--snt-text-primary);
+  line-height: 1;
+}
+
+.snt-instrument-label {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--snt-text-secondary);
+}
+
+/* ── DIVIDERS ────────────────────────────────────────────────── */
+
+.snt-divider {
+  border-top: 1px solid var(--snt-navy-500);
+}
+
+.snt-divider-cream {
+  border-top: 1px solid var(--snt-cream-200);
+}
+
+/* ── RISK STATUS STRIPS (no glow) ───────────────────────────── */
+
+.snt-risk-critical {
+  color: var(--snt-critical-text);
+  background-color: var(--snt-critical-bg);
+  border-color: var(--snt-critical-border);
+}
+
+.snt-risk-high {
+  color: var(--snt-high-text);
+  background-color: var(--snt-high-bg);
+  border-color: var(--snt-high-border);
+}
+
+.snt-risk-medium {
+  color: var(--snt-medium-text);
+  background-color: var(--snt-medium-bg);
+  border-color: var(--snt-medium-border);
+}
+
+.snt-risk-safe {
+  color: var(--snt-safe-text);
+  background-color: var(--snt-safe-bg);
+  border-color: var(--snt-safe-border);
+}
+
+/* ── SEVERITY GLOW UTILITIES — REMOVED/SUBDUED ──────────────── */
+/* These are kept for backward-compat but stripped of neon glow */
+
 .glow-critical {
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.25);
+  box-shadow: 0 1px 6px rgba(155, 44, 44, 0.2);
 }
 
 .glow-high {
-  box-shadow: 0 0 15px rgba(249, 115, 22, 0.2);
+  box-shadow: 0 1px 6px rgba(156, 74, 16, 0.15);
 }
 
 .glow-cyan {
-  box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
+  box-shadow: 0 1px 6px rgba(79, 112, 153, 0.15);
 }
 
-/* Custom Scrollbars */
+/* ── 3D DEPTH UTILITIES ─────────────────────────────────────── */
+
+.snt-depth-stage {
+  perspective: 800px;
+  perspective-origin: 50% 40%;
+}
+
+.snt-node-fore {
+  transform: translateZ(12px);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.5),
+    0 2px 6px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+.snt-node-mid {
+  transform: translateZ(4px);
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.4),
+    0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+.snt-node-back {
+  transform: translateZ(-4px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  opacity: 0.85;
+}
+
+.snt-node-critical {
+  box-shadow:
+    0 0 0 1px var(--snt-critical-border),
+    0 0 0 4px rgba(155, 44, 44, 0.12),
+    0 8px 20px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+/* ── BUTTONS (professional, no glow) ────────────────────────── */
+
+.snt-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 2px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  white-space: nowrap;
+}
+
+.snt-btn:focus-visible {
+  outline: 2px solid var(--snt-accent);
+  outline-offset: 2px;
+}
+
+.snt-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.snt-btn-primary {
+  background-color: var(--snt-accent-dim);
+  border-color: var(--snt-accent);
+  color: var(--snt-accent-light);
+}
+.snt-btn-primary:hover:not(:disabled) {
+  background-color: var(--snt-accent);
+  color: var(--snt-cream-50);
+}
+
+.snt-btn-secondary {
+  background-color: transparent;
+  border-color: var(--snt-navy-400);
+  color: var(--snt-text-secondary);
+}
+.snt-btn-secondary:hover:not(:disabled) {
+  border-color: var(--snt-navy-300);
+  color: var(--snt-text-primary);
+}
+
+.snt-btn-danger {
+  background-color: var(--snt-critical-bg);
+  border-color: var(--snt-critical-border);
+  color: var(--snt-critical-text);
+}
+.snt-btn-danger:hover:not(:disabled) {
+  background-color: var(--snt-critical);
+  border-color: var(--snt-critical-text);
+  color: #fff;
+}
+
+.snt-btn-warning {
+  background-color: var(--snt-high-bg);
+  border-color: var(--snt-high-border);
+  color: var(--snt-high-text);
+}
+.snt-btn-warning:hover:not(:disabled) {
+  background-color: var(--snt-high);
+  color: #fff;
+}
+
+/* ── SCROLLBARS ─────────────────────────────────────────────── */
+
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0b0f17;
+  background: var(--snt-navy-950);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1f293d;
-  border-radius: 3px;
+  background: var(--snt-navy-500);
+  border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #374151;
+  background: var(--snt-navy-400);
 }
 
-/* Live stream animation */
+/* ── TABLES ─────────────────────────────────────────────────── */
+
+.snt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.snt-table thead tr {
+  border-bottom: 1px solid var(--snt-navy-500);
+}
+
+.snt-table th {
+  padding: 8px 12px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--snt-text-tertiary);
+  text-align: left;
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+
+.snt-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(37, 52, 80, 0.5);
+  vertical-align: middle;
+}
+
+.snt-table tbody tr:hover {
+  background-color: var(--snt-navy-600);
+}
+
+/* Cream table variant — for analytical surfaces */
+.snt-table-cream {
+  background: var(--snt-cream-100);
+}
+
+.snt-table-cream thead tr {
+  border-bottom: 1px solid var(--snt-cream-200);
+}
+
+.snt-table-cream th {
+  color: var(--snt-cream-muted);
+}
+
+.snt-table-cream td {
+  border-bottom: 1px solid var(--snt-cream-200);
+  color: var(--snt-cream-text);
+}
+
+.snt-table-cream tbody tr:hover {
+  background-color: var(--snt-cream-200);
+}
+
+/* ── FORM ELEMENTS ──────────────────────────────────────────── */
+
+.snt-input {
+  background-color: var(--snt-navy-950);
+  border: 1px solid var(--snt-navy-500);
+  border-radius: 2px;
+  color: var(--snt-text-primary);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  padding: 7px 12px;
+  transition: border-color 0.12s ease;
+  width: 100%;
+}
+
+.snt-input:focus {
+  outline: none;
+  border-color: var(--snt-accent);
+}
+
+.snt-input::placeholder {
+  color: var(--snt-text-tertiary);
+}
+
+/* ── TIMELINE ────────────────────────────────────────────────── */
+
+.snt-timeline-line {
+  position: absolute;
+  left: 11px;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    var(--snt-navy-400) 0%,
+    var(--snt-high-text) 50%,
+    var(--snt-critical-text) 100%
+  );
+  opacity: 0.6;
+}
+
+.snt-timeline-node {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid;
+  background: var(--snt-navy-900);
+  position: absolute;
+  left: 7px;
+  top: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── ANIMATIONS ─────────────────────────────────────────────── */
+
 @keyframes pulse-live {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(1.15); }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes subtle-appear {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 .animate-pulse-live {
-  animation: pulse-live 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: pulse-live 2.5s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.25s ease-out forwards;
+}
+
+/* ── SIDEBAR NAV ─────────────────────────────────────────────── */
+
+.snt-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--snt-text-secondary);
+  border-radius: 2px;
+  border: 1px solid transparent;
+  transition: all 0.12s ease;
+  text-decoration: none;
+  cursor: pointer;
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+
+.snt-nav-item:hover {
+  color: var(--snt-text-primary);
+  background-color: var(--snt-navy-700);
+  border-color: var(--snt-navy-500);
+}
+
+.snt-nav-item-active {
+  color: var(--snt-text-primary);
+  background-color: var(--snt-accent-dim);
+  border-color: var(--snt-accent);
+  border-left: 2px solid var(--snt-accent-light);
+  padding-left: 9px;
+}
+
+/* ── STATUS INDICATORS ──────────────────────────────────────── */
+
+.snt-status-safe {
+  background: var(--snt-safe-bg);
+  color: var(--snt-safe-text);
+  border: 1px solid var(--snt-safe-border);
+}
+
+.snt-status-monitor {
+  background: var(--snt-info);
+  color: var(--snt-info-text);
+  border: 1px solid var(--snt-navy-300);
+}
+
+.snt-status-elevated {
+  background: var(--snt-medium-bg);
+  color: var(--snt-medium-text);
+  border: 1px solid var(--snt-medium-border);
+}
+
+.snt-status-high {
+  background: var(--snt-high-bg);
+  color: var(--snt-high-text);
+  border: 1px solid var(--snt-high-border);
+}
+
+.snt-status-critical {
+  background: var(--snt-critical-bg);
+  color: var(--snt-critical-text);
+  border: 1px solid var(--snt-critical-border);
+}
+
+/* ── LEFT BORDER ACCENT (risk severity on tables/events) ────── */
+
+.snt-border-critical { border-left: 2px solid var(--snt-critical-text); }
+.snt-border-high      { border-left: 2px solid var(--snt-high-text); }
+.snt-border-medium    { border-left: 2px solid var(--snt-medium-text); }
+.snt-border-safe      { border-left: 2px solid var(--snt-safe-text); }
+
+/* ── RECHARTS OVERRIDES ─────────────────────────────────────── */
+
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: var(--snt-navy-800) !important;
+  border: 1px solid var(--snt-navy-500) !important;
+  border-radius: 2px !important;
+  color: var(--snt-text-primary) !important;
+  font-family: 'IBM Plex Sans', sans-serif !important;
+  font-size: 12px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+}
+
+/* ── FOCUS STATES (ACCESSIBILITY) ────────────────────────────── */
+
+:focus-visible {
+  outline: 2px solid var(--snt-accent);
+  outline-offset: 2px;
+}
+
+/* ── SELECTION ───────────────────────────────────────────────── */
+
+::selection {
+  background: rgba(79, 112, 153, 0.3);
+  color: var(--snt-text-primary);
 }

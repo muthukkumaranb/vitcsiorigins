@@ -8,23 +8,43 @@ interface TopHeaderProps {
 
 export const TopHeader: React.FC<TopHeaderProps> = ({ lastUpdated = 12 }) => {
   return (
-    <header className="h-16 bg-[#0b0f17]/90 backdrop-blur-md border-b border-[#1f293d] px-6 flex items-center justify-between sticky top-0 z-30">
+    <header
+      className="h-14 border-b px-6 flex items-center justify-between sticky top-0 z-30"
+      style={{
+        backgroundColor: 'var(--snt-navy-800)',
+        borderColor: 'var(--snt-navy-500)'
+      }}
+    >
       {/* Left Engine Status Indicators */}
-      <div className="flex items-center gap-4 text-xs">
-        <div className="flex items-center gap-2 px-3 py-1 bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 rounded-full font-medium shadow-sm">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse-live" />
+      <div className="flex items-center gap-4 text-xs font-['IBM_Plex_Sans',sans-serif]">
+        <div
+          className="flex items-center gap-2 px-2.5 py-1 border rounded-sm font-semibold uppercase tracking-wider text-[10px]"
+          style={{
+            backgroundColor: 'var(--snt-safe-bg)',
+            borderColor: 'var(--snt-safe-border)',
+            color: 'var(--snt-safe-text)'
+          }}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-[var(--snt-safe-text)] animate-pulse-live" />
           <span>Detection Engine Online</span>
         </div>
 
-        <div className="flex items-center gap-1.5 text-gray-400 font-mono">
-          <RefreshCcw className="w-3.5 h-3.5 text-gray-500 animate-spin-slow" />
+        <div className="flex items-center gap-1.5 font-mono text-[11px]" style={{ color: 'var(--snt-text-tertiary)' }}>
+          <RefreshCcw className="w-3 h-3 animate-spin-slow" style={{ opacity: 0.6 }} />
           <span>Last updated: {lastUpdated}s ago</span>
         </div>
 
         {IS_MOCK_MODE && (
-          <div className="flex items-center gap-1.5 px-2.5 py-0.5 bg-amber-950/50 border border-amber-500/40 text-amber-400 rounded text-[11px] font-semibold tracking-wider uppercase">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>DEMO MODE (Local Telemetry)</span>
+          <div
+            className="flex items-center gap-1.5 px-2 py-0.5 border rounded-sm text-[10px] font-bold tracking-wider uppercase ml-2"
+            style={{
+              backgroundColor: 'var(--snt-medium-bg)',
+              borderColor: 'var(--snt-medium-border)',
+              color: 'var(--snt-medium-text)'
+            }}
+          >
+            <ShieldCheck className="w-3 h-3" />
+            <span>DEMO (Local Data)</span>
           </div>
         )}
       </div>
@@ -33,24 +53,41 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ lastUpdated = 12 }) => {
       <div className="flex items-center gap-4">
         {/* Notification Bell */}
         <button
-          className="relative p-2 text-gray-400 hover:text-gray-200 hover:bg-[#111827] rounded-lg transition-colors border border-transparent hover:border-[#1f293d]"
+          className="relative p-1.5 rounded-sm transition-colors border border-transparent"
+          style={{ color: 'var(--snt-text-secondary)' }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--snt-navy-700)';
+            e.currentTarget.style.borderColor = 'var(--snt-navy-400)';
+            e.currentTarget.style.color = 'var(--snt-text-primary)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+            e.currentTarget.style.borderColor = 'transparent';
+            e.currentTarget.style.color = 'var(--snt-text-secondary)';
+          }}
           title="Active Alerts"
         >
           <Bell className="w-4 h-4" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-ping" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+          <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full" style={{ backgroundColor: 'var(--snt-critical-text)' }} />
         </button>
 
-        <div className="h-4 w-[1px] bg-[#1f293d]" />
+        <div className="h-4 w-[1px]" style={{ backgroundColor: 'var(--snt-navy-500)' }} />
 
         {/* User Info */}
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-cyan-950 border border-cyan-500/40 flex items-center justify-center text-cyan-300 font-bold text-xs">
-            <User className="w-4 h-4 text-cyan-400" />
+          <div
+            className="w-7 h-7 rounded-sm border flex items-center justify-center text-xs"
+            style={{
+              backgroundColor: 'var(--snt-navy-700)',
+              borderColor: 'var(--snt-navy-400)',
+              color: 'var(--snt-text-primary)'
+            }}
+          >
+            <User className="w-3.5 h-3.5" />
           </div>
           <div className="hidden sm:block text-left">
-            <div className="text-xs font-semibold text-gray-200 leading-tight">SOC Lead Analyst</div>
-            <div className="text-[10px] text-gray-400 font-mono">ID: SOC-ADMIN-01</div>
+            <div className="text-[11px] font-bold leading-tight uppercase tracking-wide" style={{ color: 'var(--snt-text-primary)' }}>SOC Lead Analyst</div>
+            <div className="text-[10px] font-mono" style={{ color: 'var(--snt-text-tertiary)' }}>ID: SOC-ADMIN-01</div>
           </div>
         </div>
       </div>
