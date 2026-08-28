@@ -10,6 +10,8 @@ import {
   RelationshipGraphData,
   AnalyticsData,
   AuditLogEntry,
+  AuditLogResponse,
+  AuditQueryParams,
   ResponseActionPayload,
   AnalystFeedback
 } from '../types/security';
@@ -116,7 +118,22 @@ export const apiService = {
   getRelationshipGraph: (userId: string) => fetchJson<RelationshipGraphData>(`/investigation/${userId}/graph`),
   getEvents: (userId?: string) => fetchJson<SecurityEvent[]>(userId ? `/events?user_id=${userId}` : '/events'),
   getAnalytics: () => fetchJson<AnalyticsData>('/analytics'),
-  getAuditLogs: () => fetchJson<AuditLogEntry[]>('/audit'),
+  getAuditLogs: async (params?: AuditQueryParams): Promise<AuditLogResponse> => {
+    const query = new URLSearchParams();
+    if (params?.severity) query.append('severity', params.severity);
+    if (params?.user_id) query.append('user_id', params.user_id);
+    if (params?.event_type) query.append('event_type', params.event_type);
+    if (params?.start) query.append('start', params.start);
+    if (params?.end) query.append('end', params.end);
+    if (params?.limit !== undefined) query.append('limit', String(params.limit));
+    if (params?.offset !== undefined) query.append('offset', String(params.offset));
+    if (params?.sort_by) query.append('sort_by', params.sort_by);
+    if (params?.order) query.append('order', params.order);
+
+    const queryString = query.toString();
+    const endpoint = queryString ? `/api/audit?${queryString}` : '/api/audit';
+    return fetchJson<AuditLogResponse>(endpoint);
+  },
   executeResponse: (payload: ResponseActionPayload) =>
     fetchJson<{ success: boolean; message: string; audit_entry: AuditLogEntry }>('/response', {
       method: 'POST',

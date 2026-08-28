@@ -11,6 +11,9 @@ import {
   RelationshipGraphData,
   AnalyticsData,
   AuditLogEntry,
+  AuditEventItem,
+  AuditLogResponse,
+  AuditQueryParams,
   ResponseActionPayload,
   AnalystFeedback
 } from '../types/security';
@@ -186,9 +189,101 @@ export const mockApiService = {
     return { ...MOCK_ANALYTICS };
   },
 
-  getAuditLogs: async (): Promise<AuditLogEntry[]> => {
+  getAuditLogs: async (params?: AuditQueryParams): Promise<AuditLogResponse> => {
     await delay();
-    return [...currentAuditLogs];
+    const mockAuditItems: AuditEventItem[] = MOCK_EVENTS.map((evt) => {
+      const riskScore = evt.risk_level === 'CRITICAL' ? 88 : evt.risk_level === 'HIGH' ? 68 : evt.risk_level === 'MEDIUM' ? 44 : 14;
+      const severity = evt.risk_level === 'MEDIUM' ? 'MODERATE' : evt.risk_level;
+      return {
+        event_id: evt.event_id,
+        timestamp: evt.timestamp.includes('T') ? evt.timestamp : `2026-08-28T${evt.timestamp}:00`,
+        user_id: evt.user_id,
+        event_type: evt.event_type.toLowerCase().replace(/\s+/g, '_'),
+        risk_score: riskScore,
+        severity,
+        behaviour_score: Math.round(riskScore * 0.8),
+        sequence_score: evt.risk_level === 'CRITICAL' ? 80 : 0,
+        context: {
+          status: evt.risk_level === 'LOW' ? 'found' : 'no_context_found',
+          multiplier: evt.risk_level === 'LOW' ? 0.8 : 1.0,
+          info: null
+        },
+        sequence: {
+          chain_detected: evt.risk_level === 'CRITICAL',
+          matched_steps: evt.risk_level === 'CRITICAL' ? [
+            { step: 'UNUSUAL_LOGIN', event_id: evt.event_id, timestamp: evt.timestamp, matched: true },
+            { step: 'PRIVILEGE_CHANGE', event_id: evt.event_id, timestamp: evt.timestamp, matched: true },
+            { step: 'DATA_EXPORT', event_id: evt.event_id, timestamp: evt.timestamp, matched: true }
+          ] : []
+        },
+        signals: [
+          {
+            signal: evt.event_type.toUpperCase().replace(/\s+/g, '_'),
+            contribution: Math.round(riskScore * 0.5),
+            description: evt.description
+          }
+        ],
+        event: {
+          event_id: evt.event_id,
+          user_id: evt.user_id,
+          timestamp: evt.timestamp,
+          event_type: evt.event_type,
+          location: evt.location,
+          device_id: evt.device || 'DEV-MOCK',
+          transaction_amount: evt.amount || '0',
+          description: evt.description
+        }
+      };
+    });
+
+    let items = [...mockAuditItems];
+
+    if (params?.severity) {
+      const sev = params.severity.toUpperCase();
+      if (sev === 'MEDIUM' || sev === 'MODERATE') {
+        items = items.filter((i) => i.severity === 'MEDIUM' || i.severity === 'MODERATE');
+      } else {
+        items = items.filter((i) => i.severity === sev);
+      }
+    }
+    if (params?.user_id) {
+      items = items.filter((i) => i.user_id.toLowerCase().includes(params.user_id!.toLowerCase()));
+    }
+    if (params?.event_type) {
+      items = items.filter((i) => i.event_type.toLowerCase().includes(params.event_type!.toLowerCase()));
+    }
+
+    const sortBy = params?.sort_by || 'timestamp';
+    const order = params?.order || 'desc';
+    const reverse = order === 'desc';
+
+    items.sort((a, b) => {
+      if (sortBy === 'risk_score') {
+        return reverse ? b.risk_score - a.risk_score : a.risk_score - b.risk_score;
+      }
+      if (sortBy === 'severity') {
+        const rank: Record<string, number> = { CRITICAL: 4, HIGH: 3, MODERATE: 2, MEDIUM: 2, LOW: 1 };
+        return reverse ? rank[b.severity] - rank[a.severity] : rank[a.severity] - rank[b.severity];
+      }
+      if (sortBy === 'event_id') {
+        return reverse ? b.event_id.localeCompare(a.event_id) : a.event_id.localeCompare(b.event_id);
+      }
+      return reverse ? b.timestamp.localeCompare(a.timestamp) : a.timestamp.localeCompare(b.timestamp);
+    });
+
+    const total = items.length;
+
+    if (params?.offset !== undefined) {
+      items = items.slice(params.offset);
+    }
+    if (params?.limit !== undefined) {
+      items = items.slice(0, params.limit);
+    }
+
+    return {
+      items,
+      total
+    };
   },
 
   executeResponse: async (payload: ResponseActionPayload) => {
