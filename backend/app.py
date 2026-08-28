@@ -13,9 +13,11 @@ from flask import Flask, jsonify, request
 try:
     from .data_loader import store
     from .processor import process_event, EventNotFoundError
+    from .response_workflow import InvalidTransitionError, workflow
 except ImportError:
     from data_loader import store
     from processor import process_event, EventNotFoundError
+    from response_workflow import InvalidTransitionError, workflow
 
 app = Flask(__name__)
 @app.after_request
@@ -24,7 +26,7 @@ def allow_frontend_origin(response):
     if origin in {"http://localhost:3000", "http://127.0.0.1:3000"}:
         response.headers["Access-Control-Allow-Origin"] = origin
     response.headers["Access-Control-Allow-Headers"] = "Content-Type"
-    response.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     return response
 
 
@@ -40,6 +42,30 @@ def get_event_risk(event_id):
         }), 404
 
     return jsonify(result), 200
+
+
+@app.route("/api/events/<event_id>/response/", methods=["GET", "POST"])
+def event_response(event_id):
+    try:
+        if request.method == "GET":
+            return jsonify(workflow.get_or_create(event_id).to_public()), 200
+
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict) or not isinstance(payload.get("decision"), str):
+            return jsonify({"error": "invalid_request", "message": "A decision of APPROVE, REJECT, or EXECUTE is required."}), 400
+
+        record = workflow.decide(event_id, payload["decision"].upper())
+        return jsonify(record.to_public()), 200
+    except EventNotFoundError:
+        return jsonify({
+            "error": "event_not_found",
+            "message": f"Event '{event_id}' does not exist.",
+            "event_id": event_id,
+        }), 404
+    except ValueError as error:
+        return jsonify({"error": "invalid_request", "message": str(error)}), 400
+    except InvalidTransitionError as error:
+        return jsonify({"error": "invalid_transition", "message": str(error), "event_id": event_id}), 409
 
 
 @app.route("/health", methods=["GET"])
