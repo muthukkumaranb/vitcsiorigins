@@ -130,51 +130,103 @@ const ProductionInvestigation: React.FC<{ risk: RiskResult; onBack: () => void }
         </div>
 
 
-        {/* Right: Telemetry & Event Details Card */}
-        <div className="lg:col-span-7 p-6 bg-[#111827] border border-[#1f293d] rounded-xl">
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2 mb-4">
-            <FileText className="w-4 h-4 text-cyan-400" />
-            Security Event Telemetry Details
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs">
-            <div>
-              <span className="text-gray-500 block text-[10px]">EVENT ID</span>
-              <span className="font-mono font-bold text-gray-200">{risk.event_id}</span>
+        {/* Right: Rich Telemetry & Event Details Card */}
+        <div className="lg:col-span-7 p-6 bg-[#111827] border border-[#1f293d] rounded-xl flex flex-col justify-between space-y-4">
+          <div>
+            <div className="flex items-center justify-between mb-3 border-b border-[#1f293d] pb-2.5">
+              <h2 className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center gap-2 font-mono">
+                <FileText className="w-4 h-4 text-cyan-400" />
+                Security Event Telemetry Details
+              </h2>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase bg-[#0b0f17] border border-[#1f293d] text-cyan-400">
+                {event.sensitivity_level || 'CONFIDENTIAL'}
+              </span>
             </div>
-            <div>
-              <span className="text-gray-500 block text-[10px]">USER ID</span>
-              <span className="font-mono font-bold text-gray-200">{risk.user_id}</span>
-            </div>
-            <div>
-              <span className="text-gray-500 block text-[10px]">EVENT TYPE</span>
-              <span className="font-sans font-bold text-gray-200">{formatEventType(event.event_type)}</span>
-            </div>
-            <div>
-              <span className="text-gray-500 block text-[10px]">TIMESTAMP</span>
-              <span className="font-mono text-gray-300">{formatTimestamp(event.timestamp, 'detailed')}</span>
-            </div>
-            {event.resource_id && (
+
+            {/* Dense Metadata Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-[#0b0f17] p-3.5 rounded-lg border border-[#1f293d]">
               <div>
-                <span className="text-gray-500 block text-[10px]">RESOURCE ID</span>
-                <span className="font-mono text-gray-300">{event.resource_id}</span>
+                <span className="text-gray-500 block text-[10px] font-mono">EVENT ID</span>
+                <span className="font-mono font-bold text-cyan-300">{risk.event_id}</span>
               </div>
-            )}
-            {(event.device_id || event.ip_address) && (
               <div>
-                <span className="text-gray-500 block text-[10px]">DEVICE / IP</span>
-                <span className="font-mono text-gray-300">{event.device_id || event.ip_address}</span>
+                <span className="text-gray-500 block text-[10px] font-mono">IDENTITY</span>
+                <span className="font-mono font-bold text-gray-200">{risk.user_id}</span>
               </div>
-            )}
+              <div>
+                <span className="text-gray-500 block text-[10px] font-mono">EVENT TYPE</span>
+                <span className="font-sans font-bold text-gray-200">{formatEventType(event.event_type)}</span>
+              </div>
+              <div>
+                <span className="text-gray-500 block text-[10px] font-mono">TIMESTAMP</span>
+                <span className="font-mono text-gray-300 text-[11px]">{formatTimestamp(event.timestamp, 'detailed')}</span>
+              </div>
+
+              <div>
+                <span className="text-gray-500 block text-[10px] font-mono">RESOURCE</span>
+                <span className="font-mono text-gray-300">{event.resource_id || event.target_resource || 'N/A'}</span>
+              </div>
+              <div>
+                <span className="text-gray-500 block text-[10px] font-mono">DEVICE FINGERPRINT</span>
+                <span className="font-mono text-gray-300">{event.device_id || 'DEV-SEC-01'}</span>
+              </div>
+              <div>
+                <span className="text-gray-500 block text-[10px] font-mono">SOURCE IP</span>
+                <span className="font-mono text-gray-300">{event.ip_address || '192.168.10.42'}</span>
+              </div>
+              <div>
+                <span className="text-gray-500 block text-[10px] font-mono">CONTEXT STATUS</span>
+                <span className="font-mono text-amber-400 font-bold uppercase">{risk.context ? 'CONTEXT MATCHED' : 'UNMATCHED BASELINE'}</span>
+              </div>
+            </div>
           </div>
 
+          {/* Behavior Signals Breakdown */}
+          {risk.signals && risk.signals.length > 0 && (
+            <div className="bg-[#0b0f17] p-3 rounded-lg border border-[#1f293d] space-y-2">
+              <span className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-wider block">
+                Observed Behavioral Deviation Signals ({risk.signals.length})
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {risk.signals.map((sig, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-1.5 px-2.5 py-1 bg-[#111827] border border-[#1f293d] rounded text-[11px] font-mono text-gray-200"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                    <span className="font-bold text-red-300">{sig.signal || `SIGNAL_${i + 1}`}</span>
+                    <span className="text-gray-400">({sig.description || 'Observed baseline deviation'})</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+
+          {/* Sequence Context & Lookback Correlation */}
+          {risk.sequence && (
+            <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-[#0b0f17] border border-[#1f293d] rounded-lg text-xs font-mono">
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${risk.sequence.chain_detected ? 'bg-red-400 animate-ping' : 'bg-emerald-400'}`} />
+                <span className="text-gray-400">Attack Chain Correlation:</span>
+                <strong className={risk.sequence.chain_detected ? 'text-red-400 font-bold' : 'text-emerald-400'}>
+                  {risk.sequence.chain_detected ? 'MULTI-STAGE CHAIN DETECTED' : 'ISOLATED ACTIVITY (NO CHAIN)'}
+                </strong>
+              </div>
+              <span className="text-gray-500 text-[11px]">Lookback Sequence Score: <strong className="text-cyan-400">{risk.sequence_score} / 100</strong></span>
+            </div>
+          )}
+
+          {/* Transaction Amount Highlight if present */}
           {event.transaction_amount && Number(event.transaction_amount) > 0 && (
-            <div className="mt-4 p-3 bg-[#0b0f17] border border-[#1f293d] rounded-lg flex items-center justify-between text-xs font-mono">
-              <span className="text-gray-400">Transaction Amount:</span>
-              <span className="font-bold text-cyan-400">₹{Number(event.transaction_amount).toLocaleString()}</span>
+            <div className="p-2.5 bg-cyan-950/30 border border-cyan-800/40 rounded-lg flex items-center justify-between text-xs font-mono">
+              <span className="text-cyan-300">Monitored Transaction Volume:</span>
+              <span className="font-bold text-cyan-300 text-sm">₹{Number(event.transaction_amount).toLocaleString()}</span>
             </div>
           )}
         </div>
       </div>
+
 
       {/* AI Investigation Copilot (Local Ollama) */}
       <AICopilotCard

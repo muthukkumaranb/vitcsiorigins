@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
+import { NotificationProvider } from './context/NotificationContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { AppShell } from './components/layout/AppShell';
 import { Login } from './pages/Login';
@@ -32,11 +33,13 @@ export const App: React.FC = () => {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<Login />} />
+          <NotificationProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<Login />} />
 
-              <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
+                <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
+
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/threats" element={<ThreatCenter />} />
                 <Route path="/identities" element={<Identities />} />
@@ -49,15 +52,16 @@ export const App: React.FC = () => {
                 <Route path="/investigation" element={<Navigate to="/threats" replace />} />
                 <Route path="/audit" element={<Audit />} />
                 <Route path="/settings" element={<Settings />} />
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Route>
-
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </BrowserRouter>
+          </NotificationProvider>
+
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
+
   );
 };
 
