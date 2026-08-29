@@ -100,7 +100,10 @@ export const apiService = {
   getIncidentNarrative: (incidentId: string, refresh = false): Promise<NarrativeResponse> =>
     fetchJson<NarrativeResponse>(`/api/incidents/${incidentId}/narrative${refresh ? '?refresh=true' : ''}`),
   getMLStatus: (): Promise<MLStatus> => fetchJson<MLStatus>('/api/ml/status'),
+  getLLMStatus: (refresh = false): Promise<{ status: string; available: boolean; preferred_model: string; installed_models: string[]; host: string; error?: string }> =>
+    fetchJson<{ status: string; available: boolean; preferred_model: string; installed_models: string[]; host: string; error?: string }>(`/api/llm/status${refresh ? '?refresh=true' : ''}`),
   getIncidents: (): Promise<SecurityIncident[]> => fetchJson<SecurityIncident[]>('/api/incidents'),
+
   getIncident: (incidentId: string): Promise<SecurityIncident> => fetchJson<SecurityIncident>(`/api/incidents/${incidentId}`),
   getBaseline: (userId: string) => fetchJson<BaselineMetric[]>(`/investigation/${userId}/baseline`),
   getPeerAnalysis: (userId: string) => fetchJson<PeerComparisonMetric[]>(`/investigation/${userId}/peer`),
