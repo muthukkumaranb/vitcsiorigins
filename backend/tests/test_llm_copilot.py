@@ -205,3 +205,38 @@ def test_process_event_with_narrative_flag(mock_generate):
     assert mock_generate.call_count == 1
     assert res_with_nar["narrative_status"] == "ok"
     assert res_with_nar["narrative"] == "Inline narrative generated on demand."
+
+
+@patch("backend.llm.ollama_client.requests.get")
+def test_check_ollama_health_ready(mock_get):
+    from backend.llm.ollama_client import check_ollama_health
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = {
+        "models": [{"name": "llama3.1:8b"}]
+    }
+    mock_get.return_value = mock_resp
+
+    status = check_ollama_health(force=True)
+    assert status["available"] is True
+    assert status["status"] == "ready"
+    assert "llama3.1:8b" in status["installed_models"]
+
+
+@patch("backend.llm.ollama_client.requests.get")
+def test_check_ollama_health_unavailable(mock_get):
+    from backend.llm.ollama_client import check_ollama_health
+    mock_get.side_effect = requests.exceptions.ConnectionError("Connection refused")
+
+    status = check_ollama_health(force=True)
+    assert status["available"] is False
+    assert status["status"] == "unavailable"
+
+
+def test_llm_status_endpoint():
+    client = app.test_client()
+    resp = client.get("/api/llm/status")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert "status" in data
+    assert "available" in data

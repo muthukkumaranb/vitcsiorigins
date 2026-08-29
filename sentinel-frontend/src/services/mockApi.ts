@@ -688,5 +688,16 @@ export const mockApiService = {
       cached: false,
       narrative: `Correlated incident ${incidentId} represents a multi-stage insider threat sequence spanning Ingress, Privilege Escalation, and Data Access stages. Multiple high-severity behavioural deviations were observed within a compressed timeframe without documented operational justification.\n\nRecommended next checks:\n• Freeze active session tokens for the associated identity\n• Review endpoint privilege modification records\n• Conduct forensic review of accessed sensitive repositories`
     };
+  },
+
+  getLLMStatus: async (_refresh = false) => {
+    await delay(100);
+    return {
+      status: 'ready',
+      available: true,
+      preferred_model: 'llama3.1:8b',
+      installed_models: ['llama3.1:8b', 'nomic-embed-text:latest'],
+      host: 'http://localhost:11434'
+    };
   }
 };

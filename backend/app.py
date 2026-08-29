@@ -17,10 +17,12 @@ from .analyzer import get_security_analysis, get_analytics_data
 from .incident_correlation import get_all_incidents, get_incident_by_id
 from .ml import is_ml_available, get_model, FEATURE_NAMES
 from .telemetry import simulator
+import time
 from .ml.registry.model_registry import model_registry
 from .ml.dataset_builder import feedback_builder
 from .ml.trainer import train_candidate_model
-from .llm import generate_narrative
+from .llm import generate_narrative, check_ollama_health
+
 
 
 
@@ -106,6 +108,13 @@ def get_event_narrative_endpoint(event_id):
 @app.route("/api/health", methods=["GET"])
 def health():
     return jsonify({"status": "ok", "events": len(store.events_by_id), "users": len(store.users_by_id), "contexts": len(store.contexts)}), 200
+
+
+@app.route("/api/llm/status", methods=["GET"])
+def llm_status_endpoint():
+    force = request.args.get("refresh", "").lower() in {"true", "1", "yes"}
+    return jsonify(check_ollama_health(force=force)), 200
+
 
 
 @app.route("/api/security-analysis", methods=["GET"])

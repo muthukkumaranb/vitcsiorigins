@@ -4,7 +4,6 @@ import { TrustLandscapeChart } from '../components/dashboard/TrustLandscapeChart
 import { ThreatOverview } from '../components/dashboard/ThreatOverview';
 import { TopCriticalIdentities } from '../components/dashboard/TopCriticalIdentities';
 import { LiveBehaviourStream } from '../components/dashboard/LiveBehaviourStream';
-import { LoadingSkeleton } from '../components/common/LoadingSkeleton';
 import { useDashboardData, useIdentitiesData } from '../hooks/useSecurityData';
 import { useLiveBehaviourStream } from '../hooks/usePolling';
 import { Activity, ShieldAlert, Users, Layers, AlertTriangle, RefreshCw } from 'lucide-react';
@@ -21,23 +20,8 @@ export const Dashboard: React.FC = () => {
     refetchStream();
   };
 
-
-  const isLoadingInitial = (dashboardQuery.isLoading || identitiesQuery.isLoading) && !dashboardQuery.data;
-  if (isLoadingInitial) {
-    return (
-      <div className="space-y-6">
-        <div className="border-b border-[#1f293d] pb-4">
-          <h1 className="text-xl font-black tracking-tight text-gray-100 uppercase">
-            COMMAND CENTER — Security Posture
-          </h1>
-          <p className="text-xs text-cyan-400 animate-pulse mt-1">Connecting to SENTINEL runtime telemetry...</p>
-        </div>
-        <LoadingSkeleton rows={6} />
-      </div>
-    );
-  }
-
   const metrics = dashboardQuery.data || {
+
     behavioural_trust_score: 92,
     behavioural_trust_trend: 0,
     active_threats: 3,

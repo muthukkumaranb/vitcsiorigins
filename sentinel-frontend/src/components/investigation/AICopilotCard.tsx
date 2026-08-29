@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bot, Sparkles, RefreshCw, AlertCircle, CheckCircle2, ShieldCheck, Cpu } from 'lucide-react';
+import { Bot, Sparkles, RefreshCw, AlertCircle, CheckCircle2, ShieldCheck, Cpu, ShieldAlert } from 'lucide-react';
 import { apiService, mockApiService, IS_MOCK_MODE } from '../../services';
 import { NarrativeResponse } from '../../types/security';
 
@@ -8,13 +8,19 @@ interface AICopilotCardProps {
   incidentId?: string;
   initialNarrative?: string | null;
   initialStatus?: 'ok' | 'unavailable';
+  explainabilityFactors?: string[];
+  riskLevel?: string;
+  userId?: string;
 }
 
 export const AICopilotCard: React.FC<AICopilotCardProps> = ({
   eventId,
   incidentId,
   initialNarrative = null,
-  initialStatus
+  initialStatus,
+  explainabilityFactors = [],
+  riskLevel = 'MODERATE',
+  userId
 }) => {
   const [narrativeData, setNarrativeData] = useState<NarrativeResponse | null>(
     initialNarrative
@@ -76,7 +82,6 @@ export const AICopilotCard: React.FC<AICopilotCardProps> = ({
       mainNarrativeLines = lines.slice(0, checksIndex);
       checkLines = lines.slice(checksIndex + 1);
     } else {
-      // Look for bullet lines starting with '-', '*', '•', or digits
       mainNarrativeLines = lines.filter(l => !l.startsWith('•') && !l.startsWith('-') && !l.startsWith('*') && !/^\d+\./.test(l));
       checkLines = lines.filter(l => l.startsWith('•') || l.startsWith('-') || l.startsWith('*') || /^\d+\./.test(l));
     }
@@ -99,7 +104,6 @@ export const AICopilotCard: React.FC<AICopilotCardProps> = ({
               {checkLines.map((chk, idx) => {
                 const cleaned = chk.replace(/^([•\-*]|\d+\.)\s*/, '');
                 return (
-
                   <li key={idx} className="text-xs text-gray-300 flex items-start gap-2">
                     <span className="text-cyan-400 font-bold">•</span>
                     <span>{cleaned}</span>
@@ -194,7 +198,7 @@ export const AICopilotCard: React.FC<AICopilotCardProps> = ({
               Synthesizing Grounded Narrative via Ollama...
             </p>
             <p className="text-[11px] text-gray-400 mt-0.5">
-              Local inference running on RTX 4070 (8GB VRAM) · Grounding only, zero hallucination
+              Local bounded inference · Zero external data egress · Grounded facts only
             </p>
           </div>
         </div>
@@ -206,7 +210,7 @@ export const AICopilotCard: React.FC<AICopilotCardProps> = ({
           <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#1f293d] text-[10px] font-mono text-gray-500">
             <div className="flex items-center gap-1.5 text-emerald-400">
               <CheckCircle2 className="w-3 h-3" />
-              <span>Grounding verified: 100% deterministic facts & severity anchored</span>
+              <span>Grounding verified: 100% deterministic facts &amp; severity anchored</span>
             </div>
             <div>
               {narrativeData.cached ? 'Loaded from local cache' : 'Freshly synthesized via Ollama'}
@@ -214,21 +218,72 @@ export const AICopilotCard: React.FC<AICopilotCardProps> = ({
           </div>
         </div>
       ) : (
-        <div className="p-4 bg-amber-950/20 border border-amber-800/40 rounded-lg text-xs space-y-2">
-          <div className="flex items-center gap-2 text-amber-400 font-semibold font-mono">
-            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
-            <span>AI Summary Unavailable — Showing Raw Ground-Truth Signals Below</span>
-          </div>
-          <p className="text-gray-400 text-[11px]">
-            Ollama instance is offline or unreachable at <code className="text-gray-300 font-mono">http://localhost:11434</code>. SENTINEL fail-closed security ensures all deterministic rules, ML probabilities, and sequence indicators remain 100% intact below.
-          </p>
-          <div className="pt-1">
-            <button
-              onClick={() => handleGenerate(true)}
-              className="px-3 py-1 bg-amber-900/40 hover:bg-amber-800/50 border border-amber-700/50 text-amber-200 rounded text-xs font-mono transition-colors cursor-pointer"
-            >
-              Retry Ollama Connection
-            </button>
+        <div className="space-y-3">
+          {/* Deterministic Investigation Analysis Card */}
+          <div className="p-4 bg-[#0b0f17] border border-amber-800/40 rounded-lg text-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-amber-400 font-bold font-mono">
+                <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>Deterministic Investigation Analysis (Fail-Closed Fallback)</span>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 bg-amber-950 border border-amber-800 text-amber-300 rounded font-bold">
+                DETERMINISTIC
+              </span>
+            </div>
+
+            <p className="text-gray-300 text-xs leading-relaxed">
+              Target identity <strong className="text-cyan-400 font-mono">{userId || eventId || incidentId}</strong> triggered a <strong className="text-amber-400 font-bold">{riskLevel}</strong> risk posture across the multi-stage detection pipeline. Behavioral baseline deviation and lookback sequence correlation were evaluated deterministically.
+            </p>
+
+            {explainabilityFactors && explainabilityFactors.length > 0 && (
+              <div className="p-3 bg-[#0f172a]/80 border border-[#1f293d] rounded-lg">
+                <h5 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 font-mono">
+                  Primary Contributing Factors:
+                </h5>
+                <ul className="space-y-1">
+                  {explainabilityFactors.slice(0, 4).map((factor, i) => (
+                    <li key={i} className="text-xs text-gray-300 flex items-start gap-2">
+                      <span className="text-cyan-400 font-bold">•</span>
+                      <span>{factor}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="p-3 bg-[#0f172a]/60 border border-cyan-900/30 rounded-lg">
+              <h5 className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider mb-1.5 font-mono flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
+                Recommended SOC Next Steps:
+              </h5>
+              <ul className="space-y-1 text-xs text-gray-300">
+                <li className="flex items-start gap-2">
+                  <span className="text-cyan-400 font-bold">•</span>
+                  <span>Validate user session authorization and verify IP/device authenticity</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-cyan-400 font-bold">•</span>
+                  <span>Cross-reference change tickets for after-hours or sensitive operations</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-cyan-400 font-bold">•</span>
+                  <span>Inspect chronological event history in Audit Log for lateral progression</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="flex items-center justify-between pt-1 text-[11px] text-gray-400">
+              <span className="flex items-center gap-1 text-gray-500">
+                <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
+                Ollama service offline or timed out — Deterministic analysis active.
+              </span>
+              <button
+                onClick={() => handleGenerate(true)}
+                className="px-3 py-1 bg-amber-900/40 hover:bg-amber-800/50 border border-amber-700/50 text-amber-200 rounded text-xs font-mono transition-colors cursor-pointer"
+              >
+                Retry Ollama Connection
+              </button>
+            </div>
           </div>
         </div>
       )}

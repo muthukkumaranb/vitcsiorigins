@@ -181,7 +181,11 @@ const ProductionInvestigation: React.FC<{ risk: RiskResult; onBack: () => void }
         eventId={risk.event_id}
         initialNarrative={risk.narrative}
         initialStatus={risk.narrative_status}
+        explainabilityFactors={risk.explainability_factors}
+        riskLevel={risk.severity}
+        userId={risk.user_id}
       />
+
 
       {/* ML Intelligence Card & Explainability Summary */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -395,7 +399,12 @@ export const Investigation: React.FC = () => {
         <AICopilotCard
           eventId={identity.top_event_id || identity.user_id}
           initialNarrative={null}
+          explainabilityFactors={'explainability_factors' in risk ? (risk.explainability_factors as string[]) : ('signals' in risk ? (risk.signals as Array<{ description?: string }>).map((s) => s.description || '') : [])}
+          riskLevel={'severity' in risk ? (risk.severity as string) : (risk.risk_level as string)}
+          userId={identity.user_id}
         />
+
+
 
         {/* Hero Grid: Context Panel + Explainable Risk Breakdown */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
