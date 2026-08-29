@@ -2,9 +2,10 @@ name: SENTINEL CI
 
 on:
   push:
-    branches: [ main, ml_advancements ]
+    branches: [ main, integration, ml_advancements ]
   pull_request:
-    branches: [ main, ml_advancements ]
+    branches: [ main, integration, ml_advancements ]
+
 
 jobs:
   backend-tests:
